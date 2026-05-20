@@ -1,5 +1,8 @@
+import { useEffect, useState } from "react";
 import { NavLink, useNavigate } from "react-router-dom";
 import { useAuth } from "../../context/AuthContext";
+import { apiFetch, buildUrl } from "../../utils/api";
+import { parseSectionContent } from "../../utils/sectionContent";
 import clsx from "clsx";
 
 const NAV_ITEMS = [
@@ -46,8 +49,20 @@ function NavItem({ to, icon, label }) {
 }
 
 export default function Sidebar({ collapsed, onToggle }) {
-  const { user, logout, hasPermission } = useAuth();
+  const { user, logout, hasPermission, token } = useAuth();
   const navigate = useNavigate();
+  const [logoUrl, setLogoUrl] = useState("/logo.png");
+
+  useEffect(() => {
+    if (!token) return;
+    apiFetch("/content/texts", { token })
+      .then((texts) => {
+        const brand = Array.isArray(texts) ? texts.find((t) => t.section === "branding") : null;
+        const c = parseSectionContent(brand?.content);
+        if (c.logoUrl) setLogoUrl(buildUrl(c.logoUrl));
+      })
+      .catch(() => {});
+  }, [token]);
 
   const handleLogout = () => {
     logout();
@@ -68,7 +83,12 @@ export default function Sidebar({ collapsed, onToggle }) {
     >
       {/* Logo */}
       <div className="px-lg py-xl flex items-center gap-sm min-h-[72px] border-b border-outline-variant">
-        <img src="/logo.png" alt="Taoman" className="w-9 h-9 object-contain" />
+        <img
+          src={logoUrl}
+          alt="Taoman"
+          className="w-9 h-9 object-contain"
+          onError={(e) => { e.currentTarget.src = "/logo.png"; }}
+        />
         {!collapsed && (
           <div className="overflow-hidden">
             <h1 className="font-bold text-[15px] leading-tight text-primary dark:text-[#b2c5ff] whitespace-nowrap">

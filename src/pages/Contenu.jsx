@@ -3,16 +3,15 @@ import { useAuth } from "../context/AuthContext";
 import { apiFetch, buildUrl } from "../utils/api";
 import clsx from "clsx";
 import MediaPicker from "../components/MediaPicker";
-
-function parseSectionContent(raw) {
-  if (!raw) return {};
-  if (typeof raw === "object") return raw;
-  try {
-    return JSON.parse(raw);
-  } catch {
-    return {};
-  }
-}
+import {
+  parseSectionContent,
+  findSectionRecord,
+  hasSectionRecord,
+  normalizeHeroForEditor,
+  normalizeStatsForEditor,
+  statsEditorToPayload,
+  getSectionPreview,
+} from "../utils/sectionContent";
 
 const SITE_SECTIONS = [
   { key: "hero", emoji: "🏠", label: "Section Hero", description: "Titre principal et boutons (accueil)" },
@@ -107,7 +106,7 @@ export default function Contenu() {
     }
   };
 
-  const hasSectionContent = (key) => texts.some((t) => t.section === key);
+  const hasSectionContent = (key) => hasSectionRecord(texts, key);
 
   useEffect(() => {
     if (!token) return;
@@ -175,8 +174,14 @@ export default function Contenu() {
   };
 
   const openSectionEditor = (key) => {
-    const section = texts.find((item) => item.section === key) || null;
+    const section = findSectionRecord(texts, key);
     let content = parseSectionContent(section?.content);
+    if (key === "hero") {
+      content = normalizeHeroForEditor(content);
+    }
+    if (key === "statistics") {
+      content = normalizeStatsForEditor(content);
+    }
     if (key === "testimonials" && !content.items?.length) {
       content = { items: [{ name: "", role: "", comment: "" }] };
     }
@@ -195,10 +200,14 @@ export default function Contenu() {
 
   const handleTextSubmit = async (e) => {
     e.preventDefault();
+    let payload = textForm.content;
+    if (textForm.section === "statistics") {
+      payload = statsEditorToPayload(textForm.content);
+    }
     try {
       await apiFetch("/content/texts", {
         method: "POST",
-        body: { section: textForm.section, content: textForm.content },
+        body: { section: textForm.section, content: payload },
         token,
       });
       setSaveMessage("Section enregistrée avec succès.");
@@ -267,7 +276,7 @@ export default function Contenu() {
           </p>
         </div>
         <a
-          href="https://taoman-platforme.vercel.app/"
+          href={vitrineBase || "https://taoman-main.vercel.app/"}
           target="_blank"
           rel="noopener noreferrer"
           className="btn-secondary gap-xs w-fit"
@@ -324,8 +333,13 @@ export default function Contenu() {
                 )}
               </p>
               <p className="text-body-sm text-on-surface-variant">{section.description}</p>
+              <p className="text-label-sm text-on-surface mt-2 line-clamp-3 font-medium">
+                {getSectionPreview(section.key, texts) || (
+                  <span className="text-outline italic">Aucun contenu — cliquez pour ajouter</span>
+                )}
+              </p>
             </div>
-            <span className="material-symbols-outlined text-outline">edit</span>
+            <span className="material-symbols-outlined text-outline shrink-0">edit</span>
           </button>
         ))}
       </div>
@@ -397,74 +411,100 @@ export default function Contenu() {
           <form onSubmit={handleTextSubmit} className="space-y-md pb-lg">
             {selectedSection === "hero" && (
               <div className="space-y-md">
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-md">
-                  <div>
-                    <label className="block text-label-md text-on-surface-variant mb-xs">Titre (Français)</label>
-                    <input
-                      required
-                      value={textForm.content?.titleFr || ""}
-                      onChange={(e) => setTextForm({...textForm, content: {...textForm.content, titleFr: e.target.value}})}
-                      className="input-field"
-                      placeholder="Titre principal"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-label-md text-on-surface-variant mb-xs">Titre (Anglais)</label>
-                    <input
-                      value={textForm.content?.titleEn || ""}
-                      onChange={(e) => setTextForm({...textForm, content: {...textForm.content, titleEn: e.target.value}})}
-                      className="input-field"
-                      placeholder="Main title"
-                    />
-                  </div>
+                <div className="rounded-lg border border-primary/20 bg-primary-container/10 p-md text-body-sm text-on-surface">
+                  <p className="font-semibold mb-xs">Aperçu accueil (bandeau)</p>
+                  <p className="text-label-sm text-on-surface-variant">
+                    {textForm.content?.badgeMain} · {(textForm.content?.badges || []).join(" · ")}
+                  </p>
+                  <p className="mt-sm font-bold text-lg">
+                    {textForm.content?.title} <span className="font-normal">{textForm.content?.subtitle}</span>
+                  </p>
+                  <p className="mt-xs text-on-surface-variant line-clamp-2">{textForm.content?.description}</p>
                 </div>
                 <div>
-                  <label className="block text-label-md text-on-surface-variant mb-xs">Sous-titre</label>
-                  <textarea
-                    value={textForm.content?.subtitle || ""}
-                    onChange={(e) => setTextForm({...textForm, content: {...textForm.content, subtitle: e.target.value}})}
-                    rows={3}
-                    className="input-field resize-none"
-                    placeholder="Description principale"
+                  <label className="block text-label-md text-on-surface-variant mb-xs">Badge principal (ex. Entreprise TAOMAN…)</label>
+                  <input
+                    required
+                    value={textForm.content?.badgeMain || ""}
+                    onChange={(e) => updateContentField({ badgeMain: e.target.value })}
+                    className="input-field"
+                  />
+                </div>
+                <div>
+                  <label className="block text-label-md text-on-surface-variant mb-xs">Badges (séparés par des virgules)</label>
+                  <input
+                    value={(textForm.content?.badges || []).join(", ")}
+                    onChange={(e) =>
+                      updateContentField({
+                        badges: e.target.value.split(",").map((s) => s.trim()).filter(Boolean),
+                      })
+                    }
+                    className="input-field"
+                    placeholder="KYC & conformité, Reporting PDF, Mobile Money, Alertes WhatsApp"
                   />
                 </div>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-md">
                   <div>
-                    <label className="block text-label-md text-on-surface-variant mb-xs">Bouton principal</label>
+                    <label className="block text-label-md text-on-surface-variant mb-xs">Titre ligne 1 (ex. Excellence)</label>
                     <input
-                      value={textForm.content?.primaryButton || ""}
-                      onChange={(e) => setTextForm({...textForm, content: {...textForm.content, primaryButton: e.target.value}})}
+                      required
+                      value={textForm.content?.title || ""}
+                      onChange={(e) => updateContentField({ title: e.target.value })}
                       className="input-field"
-                      placeholder="Texte du bouton"
                     />
                   </div>
                   <div>
-                    <label className="block text-label-md text-on-surface-variant mb-xs">Bouton secondaire</label>
+                    <label className="block text-label-md text-on-surface-variant mb-xs">Titre ligne 2 (ex. dans chaque service)</label>
                     <input
-                      value={textForm.content?.secondaryButton || ""}
-                      onChange={(e) => setTextForm({...textForm, content: {...textForm.content, secondaryButton: e.target.value}})}
+                      value={textForm.content?.subtitle || ""}
+                      onChange={(e) => updateContentField({ subtitle: e.target.value })}
                       className="input-field"
-                      placeholder="Texte du bouton"
                     />
                   </div>
                 </div>
                 <div>
-                  <label className="block text-label-md text-on-surface-variant mb-xs">Badge / étiquette</label>
+                  <label className="block text-label-md text-on-surface-variant mb-xs">Description</label>
+                  <textarea
+                    value={textForm.content?.description || ""}
+                    onChange={(e) => updateContentField({ description: e.target.value })}
+                    rows={4}
+                    className="input-field resize-none"
+                    placeholder="Taoman Groupe offre des services professionnels…"
+                  />
+                </div>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-md">
+                  <div>
+                    <label className="block text-label-md text-on-surface-variant mb-xs">Bouton 1</label>
+                    <input
+                      value={textForm.content?.btn1 || ""}
+                      onChange={(e) => updateContentField({ btn1: e.target.value })}
+                      className="input-field"
+                      placeholder="Commencer à investir"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-label-md text-on-surface-variant mb-xs">Bouton 2</label>
+                    <input
+                      value={textForm.content?.btn2 || ""}
+                      onChange={(e) => updateContentField({ btn2: e.target.value })}
+                      className="input-field"
+                      placeholder="Voir nos services"
+                    />
+                  </div>
+                </div>
+                <div>
+                  <label className="block text-label-md text-on-surface-variant mb-xs">Légende image (dashboard)</label>
                   <input
-                    value={textForm.content?.badge || ""}
-                    onChange={(e) => setTextForm({...textForm, content: {...textForm.content, badge: e.target.value}})}
+                    value={textForm.content?.imageCaption || ""}
+                    onChange={(e) => updateContentField({ imageCaption: e.target.value })}
                     className="input-field"
-                    placeholder="Texte du badge"
                   />
                 </div>
                 <MediaPicker
                   label="Image de fond (hero)"
-                  value={textForm.content?.heroImage || textForm.content?.backgroundImage || ""}
+                  value={textForm.content?.heroImage || ""}
                   onChange={(url) =>
-                    setTextForm({
-                      ...textForm,
-                      content: { ...textForm.content, heroImage: url, backgroundImage: url },
-                    })
+                    updateContentField({ heroImage: url, backgroundImage: url })
                   }
                 />
               </div>
@@ -653,10 +693,29 @@ export default function Contenu() {
 
             {selectedSection === "contact" && (
               <div className="space-y-md">
-                <input className="input-field" placeholder="Téléphone" value={textForm.content?.phone || ""} onChange={(e) => updateContentField({ phone: e.target.value })} />
-                <input className="input-field" type="email" placeholder="Email" value={textForm.content?.email || ""} onChange={(e) => updateContentField({ email: e.target.value })} />
-                <input className="input-field" placeholder="Adresse" value={textForm.content?.address || ""} onChange={(e) => updateContentField({ address: e.target.value })} />
-                <input className="input-field" placeholder="Horaires" value={textForm.content?.hours || ""} onChange={(e) => updateContentField({ hours: e.target.value })} />
+                <div className="rounded-lg border border-primary/20 bg-primary-container/10 p-md text-body-sm">
+                  <p className="font-semibold mb-xs">Aperçu (page Contact + footer)</p>
+                  <p>📞 {textForm.content?.phone || "—"}</p>
+                  <p>✉️ {textForm.content?.email || "—"}</p>
+                  <p>📍 {textForm.content?.address || "—"}</p>
+                  <p>🕐 {textForm.content?.hours || "—"}</p>
+                </div>
+                <div>
+                  <label className="block text-label-md text-on-surface-variant mb-xs">Téléphone</label>
+                  <input className="input-field" placeholder="+228 90 42 13 77" value={textForm.content?.phone || ""} onChange={(e) => updateContentField({ phone: e.target.value })} />
+                </div>
+                <div>
+                  <label className="block text-label-md text-on-surface-variant mb-xs">Email</label>
+                  <input className="input-field" type="email" placeholder="contact@exemple.com" value={textForm.content?.email || ""} onChange={(e) => updateContentField({ email: e.target.value })} />
+                </div>
+                <div>
+                  <label className="block text-label-md text-on-surface-variant mb-xs">Adresse</label>
+                  <input className="input-field" placeholder="Ville, pays" value={textForm.content?.address || ""} onChange={(e) => updateContentField({ address: e.target.value })} />
+                </div>
+                <div>
+                  <label className="block text-label-md text-on-surface-variant mb-xs">Horaires</label>
+                  <input className="input-field" placeholder="Lun - Dim : 08h00 - 20h00" value={textForm.content?.hours || ""} onChange={(e) => updateContentField({ hours: e.target.value })} />
+                </div>
               </div>
             )}
 

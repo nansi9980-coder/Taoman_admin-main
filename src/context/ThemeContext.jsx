@@ -47,6 +47,8 @@ export function ThemeProvider({ children }) {
         // Simple hex injection. Note: if Tailwind needs rgb variables, we would convert hex to rgb here.
         root.style.setProperty('--color-primary', theme.primary);
         root.style.setProperty('--color-secondary', theme.secondary);
+        if (theme.surface) root.style.setProperty('--color-surface', theme.surface);
+        if (theme.background) root.style.setProperty('--color-background', theme.background);
       }
     } catch (e) {
       console.error(e);

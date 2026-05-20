@@ -3,6 +3,9 @@ import clsx from "clsx";
 import { io } from "socket.io-client";
 import { useAuth } from "../context/AuthContext";
 import { apiFetch, API_BASE } from "../utils/api";
+import { parseSectionContent, findSectionRecord } from "../utils/sectionContent";
+
+const emptySiteContact = { phone: "", email: "", address: "", hours: "" };
 
 export default function Contact() {
   const { token } = useAuth();
@@ -10,6 +13,10 @@ export default function Contact() {
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedContact, setSelectedContact] = useState(null);
+  const [siteContact, setSiteContact] = useState(emptySiteContact);
+  const [siteContactOpen, setSiteContactOpen] = useState(true);
+  const [siteSaving, setSiteSaving] = useState(false);
+  const [siteSaveMsg, setSiteSaveMsg] = useState("");
 
   const fetchContacts = useCallback(async () => {
     if (!token) return;
@@ -28,6 +35,43 @@ export default function Contact() {
   useEffect(() => {
     fetchContacts();
   }, [fetchContacts]);
+
+  const loadSiteContact = useCallback(async () => {
+    if (!token) return;
+    try {
+      const data = await apiFetch("/content/admin", { token });
+      const texts = Array.isArray(data?.texts) ? data.texts : [];
+      const record = findSectionRecord(texts, "contact");
+      if (record) {
+        setSiteContact({ ...emptySiteContact, ...parseSectionContent(record.content) });
+      }
+    } catch (err) {
+      console.error(err);
+    }
+  }, [token]);
+
+  useEffect(() => {
+    loadSiteContact();
+  }, [loadSiteContact]);
+
+  const saveSiteContact = async (e) => {
+    e.preventDefault();
+    setSiteSaving(true);
+    setSiteSaveMsg("");
+    try {
+      await apiFetch("/content/texts", {
+        method: "POST",
+        body: { section: "contact", content: siteContact },
+        token,
+      });
+      setSiteSaveMsg("Coordonnées enregistrées — visibles sur la page Contact du site.");
+      setTimeout(() => setSiteSaveMsg(""), 5000);
+    } catch (err) {
+      alert(err.message);
+    } finally {
+      setSiteSaving(false);
+    }
+  };
 
   useEffect(() => {
     if (!token) return;
@@ -76,13 +120,83 @@ export default function Contact() {
   };
 
   return (
-    <div className="flex h-[calc(100vh-80px)] gap-lg p-lg">
+    <div className="flex flex-col gap-lg min-h-0">
+      {/* Coordonnées site vitrine */}
+      <div className="card overflow-hidden">
+        <button
+          type="button"
+          onClick={() => setSiteContactOpen((o) => !o)}
+          className="w-full flex items-center justify-between p-md text-left hover:bg-surface-container-low"
+        >
+          <div>
+            <h2 className="font-headline-md text-headline-md text-on-surface">Coordonnées affichées sur le site</h2>
+            <p className="text-body-sm text-on-surface-variant mt-xs">
+              Téléphone, email, adresse et horaires (page Contact + footer vitrine)
+            </p>
+          </div>
+          <span className="material-symbols-outlined text-outline">
+            {siteContactOpen ? "expand_less" : "expand_more"}
+          </span>
+        </button>
+        {siteContactOpen && (
+          <form onSubmit={saveSiteContact} className="p-md pt-0 border-t border-outline-variant space-y-md">
+            {siteSaveMsg && (
+              <p className="text-label-sm text-secondary font-medium">{siteSaveMsg}</p>
+            )}
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-md">
+              <div>
+                <label className="block text-label-sm text-on-surface-variant mb-xs">Téléphone</label>
+                <input
+                  className="input-field"
+                  value={siteContact.phone}
+                  onChange={(e) => setSiteContact((s) => ({ ...s, phone: e.target.value }))}
+                  placeholder="+228 90 42 13 77"
+                />
+              </div>
+              <div>
+                <label className="block text-label-sm text-on-surface-variant mb-xs">Email</label>
+                <input
+                  className="input-field"
+                  type="email"
+                  value={siteContact.email}
+                  onChange={(e) => setSiteContact((s) => ({ ...s, email: e.target.value }))}
+                  placeholder="contact@taoman.com"
+                />
+              </div>
+              <div>
+                <label className="block text-label-sm text-on-surface-variant mb-xs">Adresse</label>
+                <input
+                  className="input-field"
+                  value={siteContact.address}
+                  onChange={(e) => setSiteContact((s) => ({ ...s, address: e.target.value }))}
+                  placeholder="Lomé, Togo"
+                />
+              </div>
+              <div>
+                <label className="block text-label-sm text-on-surface-variant mb-xs">Horaires</label>
+                <input
+                  className="input-field"
+                  value={siteContact.hours}
+                  onChange={(e) => setSiteContact((s) => ({ ...s, hours: e.target.value }))}
+                  placeholder="Lun - Dim : 08h00 - 20h00"
+                />
+              </div>
+            </div>
+            <button type="submit" disabled={siteSaving} className="btn-primary gap-xs w-fit">
+              <span className="material-symbols-outlined text-[18px]">save</span>
+              {siteSaving ? "Enregistrement…" : "Enregistrer les coordonnées"}
+            </button>
+          </form>
+        )}
+      </div>
+
+      <div className="flex flex-col lg:flex-row gap-lg min-h-[480px] lg:min-h-[calc(100vh-320px)]">
       {/* Contacts Sidebar */}
-      <div className="w-80 flex flex-col rounded-lg border border-outline-variant bg-surface-container-lowest dark:bg-[#1e1f2a] overflow-hidden">
+      <div className="w-full lg:w-80 shrink-0 flex flex-col rounded-lg border border-outline-variant bg-surface-container-lowest dark:bg-[#1e1f2a] overflow-hidden max-h-[70vh] lg:max-h-none">
         {/* Header */}
         <div className="p-md border-b border-outline-variant">
           <h2 className="font-headline-md text-headline-md text-on-surface dark:text-[#e4e4ef] mb-sm">
-            Demandes de Contact
+            Messages reçus (formulaire)
           </h2>
           <input
             type="text"
@@ -252,6 +366,7 @@ export default function Contact() {
             </div>
           </div>
         )}
+      </div>
       </div>
     </div>
   );
