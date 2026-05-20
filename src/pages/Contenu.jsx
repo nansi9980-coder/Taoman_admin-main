@@ -15,15 +15,22 @@ function parseSectionContent(raw) {
 }
 
 const SITE_SECTIONS = [
-  { key: "hero", emoji: "🏠", label: "Section Hero", description: "Titre principal et boutons" },
-  { key: "about", emoji: "🏢", label: "À propos", description: "Description de l'entreprise" },
-  { key: "statistics", emoji: "📊", label: "Statistiques", description: "Chiffres clés" },
-  { key: "cta", emoji: "📣", label: "Bannière CTA", description: "Appel à l'action principal" },
+  { key: "hero", emoji: "🏠", label: "Section Hero", description: "Titre principal et boutons (accueil)" },
+  { key: "about", emoji: "🏢", label: "À propos", description: "Texte page À propos" },
+  { key: "statistics", emoji: "📊", label: "Statistiques", description: "Chiffres clés (accueil)" },
+  { key: "sectors", emoji: "🏗️", label: "Secteurs", description: "Cartes secteurs d'investissement" },
+  { key: "testimonials", emoji: "💬", label: "Témoignages", description: "Avis clients (accueil)" },
+  { key: "cta", emoji: "📣", label: "Bannière CTA", description: "Appel à l'action" },
   { key: "faq", emoji: "❓", label: "FAQ", description: "Questions fréquentes" },
   { key: "footer", emoji: "🔗", label: "Footer", description: "Pied de page" },
-  { key: "contact", emoji: "📞", label: "Page Contact", description: "Informations de contact" },
-  { key: "seo", emoji: "🔍", label: "SEO", description: "Titres et descriptions" },
+  { key: "contact", emoji: "📞", label: "Coordonnées", description: "Téléphone, email, adresse" },
+  { key: "seo", emoji: "🔍", label: "SEO", description: "Meta titre et description" },
 ];
+
+function ensureItems(content, fallback = [{}]) {
+  if (Array.isArray(content?.items) && content.items.length > 0) return content;
+  return { ...content, items: fallback };
+}
 
 function Modal({ open, onClose, title, children }) {
   if (!open) return null;
@@ -47,6 +54,8 @@ export default function Contenu() {
   const [services, setServices] = useState([]);
   const [texts, setTexts] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState("");
+  const [saveMessage, setSaveMessage] = useState("");
   const [modalOpen, setModalOpen] = useState(false);
   const [modalType, setModalType] = useState("section");
   const [editingItem, setEditingItem] = useState(null);
@@ -69,12 +78,16 @@ export default function Contenu() {
 
   const loadData = async () => {
     setLoading(true);
+    setLoadError("");
     try {
       const data = await apiFetch("/content/admin", { token });
       setServices(Array.isArray(data?.services) ? data.services : []);
       setTexts(Array.isArray(data?.texts) ? data.texts : []);
     } catch (e) {
       console.error(e);
+      setLoadError(e.message || "Impossible de charger le contenu. Vérifiez la connexion API.");
+      setServices([]);
+      setTexts([]);
     } finally {
       setLoading(false);
     }
@@ -149,10 +162,20 @@ export default function Contenu() {
 
   const openSectionEditor = (key) => {
     const section = texts.find((item) => item.section === key) || null;
+    let content = parseSectionContent(section?.content);
+    if (key === "testimonials" && !content.items?.length) {
+      content = { items: [{ name: "", role: "", comment: "" }] };
+    }
+    if (key === "faq" && !content.items?.length) {
+      content = { items: [{ question: "", answer: "" }] };
+    }
+    if (key === "sectors" && !content.items?.length) {
+      content = { items: [{ title: "", description: "", imageUrl: "" }] };
+    }
     setModalType("section");
     setSelectedSection(key);
     setEditingItem(section);
-    setTextForm({ section: key, content: parseSectionContent(section?.content) });
+    setTextForm({ section: key, content });
     setModalOpen(true);
   };
 
@@ -164,11 +187,53 @@ export default function Contenu() {
         body: { section: textForm.section, content: textForm.content },
         token,
       });
+      setSaveMessage("Section enregistrée avec succès.");
+      setModalOpen(false);
+      loadData();
+      setTimeout(() => setSaveMessage(""), 4000);
+    } catch (e) {
+      alert(e.message);
+    }
+  };
+
+  const handleDeleteSection = async () => {
+    if (!hasSectionContent(textForm.section)) return;
+    if (!window.confirm(`Supprimer le contenu de la section « ${textForm.section} » ?`)) return;
+    try {
+      await apiFetch(`/content/texts/${textForm.section}`, { method: "DELETE", token });
       setModalOpen(false);
       loadData();
     } catch (e) {
       alert(e.message);
     }
+  };
+
+  const updateContentField = (patch) => {
+    setTextForm((prev) => ({ ...prev, content: { ...prev.content, ...patch } }));
+  };
+
+  const updateListItem = (listKey, index, field, value) => {
+    setTextForm((prev) => {
+      const base = ensureItems(prev.content, []);
+      const items = [...(base.items || [])];
+      items[index] = { ...items[index], [field]: value };
+      return { ...prev, content: { ...prev.content, items } };
+    });
+  };
+
+  const addListItem = (listKey, emptyItem) => {
+    setTextForm((prev) => {
+      const base = ensureItems(prev.content, []);
+      return { ...prev, content: { ...prev.content, items: [...(base.items || []), emptyItem] } };
+    });
+  };
+
+  const removeListItem = (index) => {
+    setTextForm((prev) => {
+      const items = [...(prev.content?.items || [])];
+      items.splice(index, 1);
+      return { ...prev, content: { ...prev.content, items } };
+    });
   };
 
   return (
@@ -192,23 +257,24 @@ export default function Contenu() {
         </a>
       </div>
 
-      {/* Explanatory text */}
-      <p className="text-body-md text-on-surface-variant">
-        Les modifications sont appliquées <strong>immédiatement</strong> sur le site vitrine après sauvegarde. Cliquez sur une section pour la modifier.
-      </p>
-
-      {/* Avis clients link */}
-      <a
-        href="/temoignages"
-        className="inline-flex items-center gap-md p-md rounded-xl border border-outline-variant bg-surface-container-lowest hover:border-primary/50 transition-colors w-fit"
-      >
-        <span className="text-2xl">💬</span>
-        <div>
-          <p className="font-semibold text-on-surface">Avis clients</p>
-          <p className="text-body-sm text-on-surface-variant">Ajouter, modifier ou supprimer des témoignages</p>
+      {loadError && (
+        <div className="rounded-lg border border-error/30 bg-error-container/10 p-md text-error">
+          {loadError}
+          <button type="button" onClick={loadData} className="btn-secondary mt-sm text-label-sm">
+            Réessayer
+          </button>
         </div>
-        <span className="material-symbols-outlined text-outline">arrow_forward</span>
-      </a>
+      )}
+
+      {saveMessage && (
+        <div className="rounded-lg border border-green-500/30 bg-green-50 dark:bg-green-900/20 p-md text-green-800 dark:text-green-200">
+          {saveMessage}
+        </div>
+      )}
+
+      <p className="text-body-md text-on-surface-variant">
+        Cliquez sur une <strong>section</strong> pour modifier textes et images. En bas : <strong>cartes de services</strong> (créer, modifier, publier, supprimer).
+      </p>
 
       {/* Sections grid */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-md">
@@ -404,6 +470,14 @@ export default function Contenu() {
                     setTextForm({ ...textForm, content: { ...textForm.content, imageUrl: url } })
                   }
                 />
+                <div>
+                  <label className="block text-label-md text-on-surface-variant mb-xs">Mission</label>
+                  <textarea className="input-field resize-none" rows={3} value={textForm.content?.mission || ""} onChange={(e) => updateContentField({ mission: e.target.value })} />
+                </div>
+                <div>
+                  <label className="block text-label-md text-on-surface-variant mb-xs">Vision</label>
+                  <textarea className="input-field resize-none" rows={3} value={textForm.content?.vision || ""} onChange={(e) => updateContentField({ vision: e.target.value })} />
+                </div>
               </div>
             )}
 
@@ -491,19 +565,90 @@ export default function Contenu() {
               </div>
             )}
 
-            {(selectedSection === "contact" || selectedSection === "seo") && (
-              <div className="text-center py-xl">
-                <p className="text-body-md text-on-surface-variant">Contenu complexe — non éditable visuellement.</p>
+            {selectedSection === "testimonials" && (
+              <div className="space-y-md">
+                {(ensureItems(textForm.content, [{ name: "", role: "", comment: "" }]).items || []).map((t, index) => (
+                  <div key={index} className="p-md border border-outline-variant rounded-lg space-y-sm">
+                    <div className="flex justify-between items-center">
+                      <span className="text-label-md font-semibold">Témoignage {index + 1}</span>
+                      {(textForm.content?.items?.length || 0) > 1 && (
+                        <button type="button" onClick={() => removeListItem(index)} className="text-error text-label-sm">Supprimer</button>
+                      )}
+                    </div>
+                    <input className="input-field" placeholder="Nom" value={t.name || ""} onChange={(e) => updateListItem("items", index, "name", e.target.value)} />
+                    <input className="input-field" placeholder="Rôle" value={t.role || ""} onChange={(e) => updateListItem("items", index, "role", e.target.value)} />
+                    <textarea className="input-field resize-none" rows={3} placeholder="Commentaire" value={t.comment || ""} onChange={(e) => updateListItem("items", index, "comment", e.target.value)} />
+                  </div>
+                ))}
+                <button type="button" onClick={() => addListItem("items", { name: "", role: "", comment: "" })} className="btn-secondary text-label-sm">+ Ajouter un témoignage</button>
               </div>
             )}
 
-            <div className="flex justify-end gap-sm pt-md border-t border-outline-variant">
-              <button type="button" onClick={() => setModalOpen(false)} className="btn-secondary">
-                Annuler
-              </button>
-              <button type="submit" className="btn-primary gap-xs">
-                <span className="material-symbols-outlined text-[18px]">save</span>Sauvegarder
-              </button>
+            {selectedSection === "sectors" && (
+              <div className="space-y-md">
+                {(ensureItems(textForm.content, [{ title: "", description: "", imageUrl: "" }]).items || []).map((s, index) => (
+                  <div key={index} className="p-md border border-outline-variant rounded-lg space-y-sm">
+                    <div className="flex justify-between items-center">
+                      <span className="text-label-md font-semibold">Secteur {index + 1}</span>
+                      {(textForm.content?.items?.length || 0) > 1 && (
+                        <button type="button" onClick={() => removeListItem(index)} className="text-error text-label-sm">Supprimer</button>
+                      )}
+                    </div>
+                    <input className="input-field" placeholder="Titre" value={s.title || ""} onChange={(e) => updateListItem("items", index, "title", e.target.value)} />
+                    <textarea className="input-field resize-none" rows={2} placeholder="Description" value={s.description || ""} onChange={(e) => updateListItem("items", index, "description", e.target.value)} />
+                    <MediaPicker label="Image" value={s.imageUrl || ""} onChange={(url) => updateListItem("items", index, "imageUrl", url)} />
+                  </div>
+                ))}
+                <button type="button" onClick={() => addListItem("items", { title: "", description: "", imageUrl: "" })} className="btn-secondary text-label-sm">+ Ajouter un secteur</button>
+              </div>
+            )}
+
+            {selectedSection === "faq" && (
+              <div className="space-y-md">
+                {(ensureItems(textForm.content, [{ question: "", answer: "" }]).items || []).map((q, index) => (
+                  <div key={index} className="p-md border border-outline-variant rounded-lg space-y-sm">
+                    <div className="flex justify-between items-center">
+                      <span className="text-label-md font-semibold">Question {index + 1}</span>
+                      {(textForm.content?.items?.length || 0) > 1 && (
+                        <button type="button" onClick={() => removeListItem(index)} className="text-error text-label-sm">Supprimer</button>
+                      )}
+                    </div>
+                    <input className="input-field" placeholder="Question" value={q.question || ""} onChange={(e) => updateListItem("items", index, "question", e.target.value)} />
+                    <textarea className="input-field resize-none" rows={3} placeholder="Réponse" value={q.answer || ""} onChange={(e) => updateListItem("items", index, "answer", e.target.value)} />
+                  </div>
+                ))}
+                <button type="button" onClick={() => addListItem("items", { question: "", answer: "" })} className="btn-secondary text-label-sm">+ Ajouter une question</button>
+              </div>
+            )}
+
+            {selectedSection === "contact" && (
+              <div className="space-y-md">
+                <input className="input-field" placeholder="Téléphone" value={textForm.content?.phone || ""} onChange={(e) => updateContentField({ phone: e.target.value })} />
+                <input className="input-field" type="email" placeholder="Email" value={textForm.content?.email || ""} onChange={(e) => updateContentField({ email: e.target.value })} />
+                <input className="input-field" placeholder="Adresse" value={textForm.content?.address || ""} onChange={(e) => updateContentField({ address: e.target.value })} />
+                <input className="input-field" placeholder="Horaires" value={textForm.content?.hours || ""} onChange={(e) => updateContentField({ hours: e.target.value })} />
+              </div>
+            )}
+
+            {selectedSection === "seo" && (
+              <div className="space-y-md">
+                <input className="input-field" placeholder="Meta titre" value={textForm.content?.metaTitle || ""} onChange={(e) => updateContentField({ metaTitle: e.target.value })} />
+                <textarea className="input-field resize-none" rows={3} placeholder="Meta description" value={textForm.content?.metaDescription || ""} onChange={(e) => updateContentField({ metaDescription: e.target.value })} />
+              </div>
+            )}
+
+            <div className="flex flex-wrap justify-between gap-sm pt-md border-t border-outline-variant">
+              {hasSectionContent(textForm.section) && (
+                <button type="button" onClick={handleDeleteSection} className="btn-secondary text-error">
+                  Supprimer cette section
+                </button>
+              )}
+              <div className="flex gap-sm ml-auto">
+                <button type="button" onClick={() => setModalOpen(false)} className="btn-secondary">Annuler</button>
+                <button type="submit" className="btn-primary gap-xs">
+                  <span className="material-symbols-outlined text-[18px]">save</span>Sauvegarder
+                </button>
+              </div>
             </div>
           </form>
         </Modal>

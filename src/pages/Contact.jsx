@@ -1,8 +1,8 @@
-import { useState, useEffect, useMemo } from "react";
+import { useState, useEffect, useCallback } from "react";
 import clsx from "clsx";
-import { useApp } from "../context/AppContext";
+import { io } from "socket.io-client";
 import { useAuth } from "../context/AuthContext";
-import { apiFetch } from "../utils/api";
+import { apiFetch, API_BASE } from "../utils/api";
 
 export default function Contact() {
   const { token } = useAuth();
@@ -11,12 +11,8 @@ export default function Contact() {
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedContact, setSelectedContact] = useState(null);
 
-  useEffect(() => {
+  const fetchContacts = useCallback(async () => {
     if (!token) return;
-    fetchContacts();
-  }, [token]);
-
-  const fetchContacts = async () => {
     setLoading(true);
     try {
       const data = await apiFetch("/contacts", { token });
@@ -27,7 +23,27 @@ export default function Contact() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [token]);
+
+  useEffect(() => {
+    fetchContacts();
+  }, [fetchContacts]);
+
+  useEffect(() => {
+    if (!token) return;
+    const socket = io(API_BASE, { transports: ["websocket"], auth: { token } });
+    socket.on("newContact", (contact) => {
+      if (!contact?.id) {
+        fetchContacts();
+        return;
+      }
+      setContacts((prev) => {
+        if (prev.some((c) => c.id === contact.id)) return prev;
+        return [contact, ...prev];
+      });
+    });
+    return () => socket.disconnect();
+  }, [token, fetchContacts]);
 
   const filteredContacts = contacts.filter((contact) =>
     contact.name.toLowerCase().includes(searchQuery.toLowerCase()) ||

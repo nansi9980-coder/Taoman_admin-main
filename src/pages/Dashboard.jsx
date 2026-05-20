@@ -322,11 +322,12 @@ export default function Dashboard() {
       {/* Quick actions */}
       <div className="card">
         <SectionTitle>Actions rapides</SectionTitle>
-        <div className="grid grid-cols-2 sm:grid-cols-4 gap-md">
+        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-md">
           {[
             { icon: "person_add", label: "Ajouter un client", to: "/clients/nouveau" },
             { icon: "post_add", label: "Nouveau devis", to: "/devis/nouveau" },
             { icon: "add_photo_alternate", label: "Ajouter un média", to: "/medias" },
+            { icon: "contact_mail", label: "Demandes contact", to: "/contact" },
             { icon: "article", label: "Voir les rapports", to: "/rapports" },
           ].map((action) => (
             <a

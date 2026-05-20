@@ -58,7 +58,7 @@ function AdminLayout() {
             <Route path="/notifications" element={<Notification />} />
             <Route path="/parametres/*" element={<Parametres />} />
             <Route path="/jobs" element={<Jobs />} />
-            <Route path="/messages" element={<Messages />} />
+            <Route path="/messages" element={<Navigate to="/contact" replace />} />
             <Route path="/contact" element={<Contact />} />
             <Route path="/calendar" element={<Calendar />} />
             <Route path="/investments" element={<Investments />} />
