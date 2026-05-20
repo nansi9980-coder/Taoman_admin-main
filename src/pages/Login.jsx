@@ -164,26 +164,6 @@ export default function Login() {
             )}
           </button>
         </form>
-
-        {/* Demo hint */}
-        <div className="mt-lg pt-lg border-t border-outline-variant dark:border-[#2e3040]">
-          <p className="text-label-sm text-outline text-center mb-sm">Accès démo</p>
-          <div className="bg-surface-container-low dark:bg-[#191a24] rounded-lg p-sm text-center">
-            <p className="text-label-sm text-on-surface-variant dark:text-[#8e90a2] font-mono">
-              admin@taoman.com
-            </p>
-            <p className="text-label-sm text-on-surface-variant dark:text-[#8e90a2] font-mono">
-              admin
-            </p>
-          </div>
-          <button
-            type="button"
-            onClick={() => setForm({ email: "admin@taoman.com", password: "admin" })}
-            className="w-full mt-sm text-label-sm text-primary dark:text-[#b2c5ff] hover:underline"
-          >
-            Remplir automatiquement
-          </button>
-        </div>
       </div>
 
       {/* Shake keyframe via style tag */}
