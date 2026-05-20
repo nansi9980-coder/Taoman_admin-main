@@ -1,7 +1,18 @@
 import { useEffect, useState } from "react";
 import { useAuth } from "../context/AuthContext";
-import { apiFetch } from "../utils/api";
+import { apiFetch, buildUrl } from "../utils/api";
 import clsx from "clsx";
+import MediaPicker from "../components/MediaPicker";
+
+function parseSectionContent(raw) {
+  if (!raw) return {};
+  if (typeof raw === "object") return raw;
+  try {
+    return JSON.parse(raw);
+  } catch {
+    return {};
+  }
+}
 
 const SITE_SECTIONS = [
   { key: "hero", emoji: "🏠", label: "Section Hero", description: "Titre principal et boutons" },
@@ -45,6 +56,7 @@ export default function Contenu() {
     title: "",
     description: "",
     icon: "",
+    imageUrl: "",
     actionText: "",
     actionLink: "",
     published: true,
@@ -58,16 +70,17 @@ export default function Contenu() {
   const loadData = async () => {
     setLoading(true);
     try {
-      const data = await apiFetch("/content", { token });
-      const items = Array.isArray(data) ? data : [];
-      setServices(items.filter((item) => item.type === "service"));
-      setTexts(items.filter((item) => item.type === "text"));
+      const data = await apiFetch("/content/admin", { token });
+      setServices(Array.isArray(data?.services) ? data.services : []);
+      setTexts(Array.isArray(data?.texts) ? data.texts : []);
     } catch (e) {
       console.error(e);
     } finally {
       setLoading(false);
     }
   };
+
+  const hasSectionContent = (key) => texts.some((t) => t.section === key);
 
   useEffect(() => {
     if (!token) return;
@@ -78,7 +91,7 @@ export default function Contenu() {
     setModalType("service");
     setSelectedSection(null);
     setEditingItem(null);
-    setServiceForm({ title: "", description: "", icon: "", actionText: "", actionLink: "", published: true });
+    setServiceForm({ title: "", description: "", icon: "", imageUrl: "", actionText: "", actionLink: "", published: true });
     setModalOpen(true);
   };
 
@@ -90,6 +103,7 @@ export default function Contenu() {
       title: srv.title || "",
       description: srv.description || "",
       icon: srv.icon || "",
+      imageUrl: srv.imageUrl || "",
       actionText: srv.actionText || "",
       actionLink: srv.actionLink || "",
       published: srv.published ?? true,
@@ -103,7 +117,7 @@ export default function Contenu() {
       if (editingItem) {
         await apiFetch(`/content/${editingItem.id}`, { method: "PUT", body: serviceForm, token });
       } else {
-        await apiFetch("/content", { method: "POST", body: { ...serviceForm, type: "service" }, token });
+        await apiFetch("/content", { method: "POST", body: serviceForm, token });
       }
       setModalOpen(false);
       loadData();
@@ -138,18 +152,18 @@ export default function Contenu() {
     setModalType("section");
     setSelectedSection(key);
     setEditingItem(section);
-    setTextForm({ section: key, content: section?.content || {} });
+    setTextForm({ section: key, content: parseSectionContent(section?.content) });
     setModalOpen(true);
   };
 
   const handleTextSubmit = async (e) => {
     e.preventDefault();
     try {
-      if (editingItem) {
-        await apiFetch(`/content/${editingItem.id}`, { method: "PUT", body: { section: textForm.section, content: textForm.content }, token });
-      } else {
-        await apiFetch("/content/texts", { method: "POST", body: { ...textForm, type: "text" }, token });
-      }
+      await apiFetch("/content/texts", {
+        method: "POST",
+        body: { section: textForm.section, content: textForm.content },
+        token,
+      });
       setModalOpen(false);
       loadData();
     } catch (e) {
@@ -207,7 +221,12 @@ export default function Contenu() {
           >
             <span className="text-2xl">{section.emoji}</span>
             <div className="flex-1">
-              <p className="font-semibold text-on-surface">{section.label}</p>
+              <p className="font-semibold text-on-surface flex items-center gap-2 flex-wrap">
+                {section.label}
+                {hasSectionContent(section.key) && (
+                  <span className="badge badge-success text-label-sm">Rempli</span>
+                )}
+              </p>
               <p className="text-body-sm text-on-surface-variant">{section.description}</p>
             </div>
             <span className="material-symbols-outlined text-outline">edit</span>
@@ -244,9 +263,17 @@ export default function Contenu() {
             {services.map((srv) => (
               <div key={srv.id} onClick={() => openEditService(srv)} className="card hover:border-primary/50 cursor-pointer transition-colors relative group">
                 <div className="flex justify-between items-start mb-sm">
-                  <span className="material-symbols-outlined text-[32px] text-primary bg-primary-container/20 p-sm rounded-lg">
-                    {srv.icon || "category"}
-                  </span>
+                  {srv.imageUrl ? (
+                    <img
+                      src={buildUrl(srv.imageUrl)}
+                      alt={srv.title}
+                      className="w-16 h-16 object-cover rounded-lg"
+                    />
+                  ) : (
+                    <span className="material-symbols-outlined text-[32px] text-primary bg-primary-container/20 p-sm rounded-lg">
+                      {srv.icon || "category"}
+                    </span>
+                  )}
                   <span className={clsx("badge", srv.published ? "badge-success" : "badge-warning")}>{srv.published ? "Publié" : "Brouillon"}</span>
                 </div>
                 <h3 className="font-headline-sm text-headline-sm text-on-surface mb-xs">{srv.title}</h3>
@@ -334,6 +361,16 @@ export default function Contenu() {
                     placeholder="Texte du badge"
                   />
                 </div>
+                <MediaPicker
+                  label="Image de fond (hero)"
+                  value={textForm.content?.heroImage || textForm.content?.backgroundImage || ""}
+                  onChange={(url) =>
+                    setTextForm({
+                      ...textForm,
+                      content: { ...textForm.content, heroImage: url, backgroundImage: url },
+                    })
+                  }
+                />
               </div>
             )}
 
@@ -360,6 +397,13 @@ export default function Contenu() {
                     placeholder="Description de l'entreprise"
                   />
                 </div>
+                <MediaPicker
+                  label="Image de la section"
+                  value={textForm.content?.imageUrl || ""}
+                  onChange={(url) =>
+                    setTextForm({ ...textForm, content: { ...textForm.content, imageUrl: url } })
+                  }
+                />
               </div>
             )}
 
@@ -421,6 +465,13 @@ export default function Contenu() {
                     placeholder="Texte du bouton d'action"
                   />
                 </div>
+                <MediaPicker
+                  label="Image de fond CTA"
+                  value={textForm.content?.imageUrl || textForm.content?.backgroundImage || ""}
+                  onChange={(url) =>
+                    setTextForm({ ...textForm, content: { ...textForm.content, imageUrl: url, backgroundImage: url } })
+                  }
+                />
               </div>
             )}
 
@@ -474,13 +525,19 @@ export default function Contenu() {
                 />
               </div>
               <div>
-                <label className="block text-label-md text-on-surface-variant mb-xs">Icône (Material Symbol) *</label>
+                <label className="block text-label-md text-on-surface-variant mb-xs">Icône (Material Symbol)</label>
                 <input
-                  required
                   value={serviceForm.icon}
                   onChange={(e) => setServiceForm({ ...serviceForm, icon: e.target.value })}
                   className="input-field"
                   placeholder="Ex: cleaning_services"
+                />
+              </div>
+              <div className="md:col-span-2">
+                <MediaPicker
+                  label="Image du service"
+                  value={serviceForm.imageUrl}
+                  onChange={(url) => setServiceForm({ ...serviceForm, imageUrl: url })}
                 />
               </div>
               <div className="row-span-2 md:col-span-2">

@@ -281,6 +281,7 @@ export default function Devis() {
     try {
       const res = await fetch(buildUrl(`/quotes/${id}/generate-pdf`), {
         method: "POST",
+        cache: "no-store",
         headers: { Authorization: `Bearer ${token}` },
       });
       if (res.ok) {

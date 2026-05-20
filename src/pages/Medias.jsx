@@ -78,6 +78,7 @@ export default function Medias() {
             <option value="general">Général</option>
             <option value="documents">Documents</option>
             <option value="images">Images</option>
+            <option value="realisation">Réalisations (vitrine)</option>
             <option value="contrats">Contrats</option>
           </select>
           <label className={clsx(
@@ -113,10 +114,18 @@ export default function Medias() {
             mediaItems.map((item) => (
               <div key={item.id} className="rounded-lg border border-outline-variant bg-surface-container-lowest p-md flex items-center justify-between gap-md hover:border-primary/50 transition-colors">
                 <div className="flex items-center gap-md">
-                  <div className="w-12 h-12 rounded-lg bg-surface-container flex items-center justify-center text-primary">
-                    <span className="material-symbols-outlined">
-                      {item.type.includes("image") ? "image" : item.type.includes("pdf") ? "picture_as_pdf" : "insert_drive_file"}
-                    </span>
+                  <div className="w-12 h-12 rounded-lg bg-surface-container flex items-center justify-center text-primary overflow-hidden shrink-0">
+                    {item.type.includes("image") && item.url ? (
+                      <img
+                        src={item.url.startsWith("http") ? item.url : buildUrl(item.url)}
+                        alt={item.name}
+                        className="w-full h-full object-cover"
+                      />
+                    ) : (
+                      <span className="material-symbols-outlined">
+                        {item.type.includes("pdf") ? "picture_as_pdf" : "insert_drive_file"}
+                      </span>
+                    )}
                   </div>
                   <div>
                     <a href={item.url?.startsWith("http") ? item.url : buildUrl(item.url)} target="_blank" rel="noreferrer" className="text-body-md font-semibold text-primary hover:underline">{item.name}</a>

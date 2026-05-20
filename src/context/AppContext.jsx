@@ -323,6 +323,7 @@ export function AppProvider({ children }) {
       
       const response = await fetch(buildUrl('/media/upload'), {
         method: 'POST',
+        cache: 'no-store',
         headers: {
           'Authorization': `Bearer ${token}`,
         },
