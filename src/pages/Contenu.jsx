@@ -56,6 +56,20 @@ export default function Contenu() {
   const [loading, setLoading] = useState(true);
   const [loadError, setLoadError] = useState("");
   const [saveMessage, setSaveMessage] = useState("");
+  const [savePreviewUrl, setSavePreviewUrl] = useState("");
+  const vitrineBase = (import.meta.env.VITE_SITE_URL || import.meta.env.VITE_CLIENT_URL || "").replace(/\/$/, "");
+  const sectionPreviewPath = {
+    hero: "/",
+    about: "/about",
+    faq: "/faq",
+    contact: "/contact",
+    cta: "/",
+    footer: "/",
+    seo: "/",
+    statistics: "/",
+    sectors: "/",
+    testimonials: "/",
+  };
   const [modalOpen, setModalOpen] = useState(false);
   const [modalType, setModalType] = useState("section");
   const [editingItem, setEditingItem] = useState(null);
@@ -188,9 +202,15 @@ export default function Contenu() {
         token,
       });
       setSaveMessage("Section enregistrée avec succès.");
+      setSavePreviewUrl(
+        vitrineBase ? `${vitrineBase}${sectionPreviewPath[textForm.section] || "/"}` : ""
+      );
       setModalOpen(false);
       loadData();
-      setTimeout(() => setSaveMessage(""), 4000);
+      setTimeout(() => {
+        setSaveMessage("");
+        setSavePreviewUrl("");
+      }, 8000);
     } catch (e) {
       alert(e.message);
     }
@@ -267,8 +287,18 @@ export default function Contenu() {
       )}
 
       {saveMessage && (
-        <div className="rounded-lg border border-green-500/30 bg-green-50 dark:bg-green-900/20 p-md text-green-800 dark:text-green-200">
-          {saveMessage}
+        <div className="rounded-lg border border-green-500/30 bg-green-50 dark:bg-green-900/20 p-md text-green-800 dark:text-green-200 flex flex-wrap items-center gap-md">
+          <span>{saveMessage}</span>
+          {savePreviewUrl && (
+            <a
+              href={savePreviewUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-label-md font-semibold underline hover:no-underline"
+            >
+              Voir sur le site →
+            </a>
+          )}
         </div>
       )}
 

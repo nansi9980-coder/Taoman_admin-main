@@ -7,7 +7,7 @@ const NAV_ITEMS = [
   { to: "/clients", icon: "group", label: "Clients", permission: "clients" },
   { to: "/devis", icon: "description", label: "Devis", permission: "devis" },
   { to: "/contenu", icon: "edit_note", label: "Contenu du site", permission: null },
-  { to: "/medias", icon: "perm_media", label: "Médiathèque", permission: "content" },
+  { to: "/medias", icon: "perm_media", label: "Médiathèque", permission: null },
   { to: "/jobs", icon: "work", label: "Emplois", permission: null },
   { to: "/contact", icon: "contact_mail", label: "Contact", permission: null },
   { to: "/calendar", icon: "calendar_month", label: "Calendrier", permission: null },

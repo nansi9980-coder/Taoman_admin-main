@@ -187,10 +187,10 @@ export default function Dashboard() {
 
       {/* KPI cards */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-lg mb-xl">
-        <StatCard icon="group" label="Clients inscrits" value={clientCount} trend={stats.clientsGrowth ?? null} trendLabel={stats.clientsTrendLabel ?? "Connectez votre API"} accent="secondary" />
-        <StatCard icon="description" label="Devis en attente" value={pendingQuotes} trend={stats.pendingQuotesGrowth ?? null} trendLabel={stats.pendingQuotesTrendLabel ?? "Connectez votre API"} accent="warning" />
-        <StatCard icon="check_circle" label="Devis acceptés" value={acceptedQuotes} trend={stats.acceptedQuotesGrowth ?? null} trendLabel={stats.acceptedQuotesTrendLabel ?? "Ce mois-ci"} accent="success" />
-        <StatCard icon="trending_up" label="Taux de conversion" value={conversionRate} trend={stats.conversionRateChange ?? null} trendLabel={stats.conversionRateLabel ?? "vs. mois précédent"} accent="primary" />
+        <StatCard icon="description" label="Devis en attente" value={pendingQuotes} accent="warning" />
+        <StatCard icon="contact_mail" label="Contacts non traités" value={stats.newContacts ?? "—"} accent="orange" />
+        <StatCard icon="design_services" label="Services publiés" value={stats.publishedServices ?? "—"} accent="secondary" />
+        <StatCard icon="edit_note" label="Sections contenu" value={stats.filledContentSections ?? "—"} accent="primary" />
       </div>
 
       {/* Charts row */}
@@ -204,7 +204,7 @@ export default function Dashboard() {
             }
           >
             <ResponsiveContainer width="100%" height={220}>
-              <AreaChart data={INSCRIPTIONS_DATA}>
+              <AreaChart data={inscriptionsData}>
                 <defs>
                   <linearGradient id="colorInscriptions" x1="0" y1="0" x2="0" y2="1">
                     <stop offset="5%" stopColor="#0052cc" stopOpacity={0.15} />
@@ -227,9 +227,6 @@ export default function Dashboard() {
                 />
               </AreaChart>
             </ResponsiveContainer>
-            <p className="text-label-sm text-outline text-center mt-sm">
-              Données disponibles après connexion API
-            </p>
           </ChartCard>
         </div>
 
@@ -238,7 +235,7 @@ export default function Dashboard() {
           <ResponsiveContainer width="100%" height={220}>
             <PieChart>
               <Pie
-                data={SERVICES_DATA}
+                data={servicesData}
                 cx="50%"
                 cy="50%"
                 innerRadius={55}
@@ -246,7 +243,7 @@ export default function Dashboard() {
                 paddingAngle={3}
                 dataKey="value"
               >
-                {SERVICES_DATA.map((entry, i) => (
+                {servicesData.map((entry, i) => (
                   <Cell key={i} fill={entry.color} />
                 ))}
               </Pie>
@@ -254,24 +251,56 @@ export default function Dashboard() {
             </PieChart>
           </ResponsiveContainer>
           <div className="space-y-xs mt-sm">
-            {SERVICES_DATA.map((s) => (
+            {servicesData.map((s) => (
               <div key={s.name} className="flex items-center justify-between text-label-sm">
                 <div className="flex items-center gap-xs">
                   <span className="w-2.5 h-2.5 rounded-full" style={{ background: s.color }} />
                   <span className="text-on-surface-variant dark:text-[#8e90a2]">{s.name}</span>
                 </div>
-                <span className="text-on-surface dark:text-[#e4e4ef] font-medium">—</span>
+                <span className="text-on-surface dark:text-[#e4e4ef] font-medium">{s.value ?? 0}</span>
               </div>
             ))}
           </div>
         </ChartCard>
       </div>
 
-      {/* Devis bar chart + recent activity */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-lg mb-xl">
+        <ChartCard title="Derniers contacts">
+          {(stats.recentContacts || []).length === 0 ? (
+            <p className="text-body-sm text-outline">Aucun contact récent</p>
+          ) : (
+            <ul className="space-y-sm">
+              {stats.recentContacts.map((c) => (
+                <li key={c.id} className="flex justify-between gap-sm text-body-sm border-b border-outline-variant/30 pb-sm">
+                  <span className="font-medium text-on-surface">{c.name}</span>
+                  <span className="text-outline truncate">{c.subject}</span>
+                </li>
+              ))}
+            </ul>
+          )}
+          <a href="/contact" className="inline-block mt-md text-label-sm text-primary hover:underline">Voir tous les contacts →</a>
+        </ChartCard>
+        <ChartCard title="Derniers devis">
+          {(stats.recentQuotes || []).length === 0 ? (
+            <p className="text-body-sm text-outline">Aucun devis récent</p>
+          ) : (
+            <ul className="space-y-sm">
+              {stats.recentQuotes.map((q) => (
+                <li key={q.id} className="flex justify-between gap-sm text-body-sm border-b border-outline-variant/30 pb-sm">
+                  <span className="font-medium text-on-surface truncate">{q.title}</span>
+                  <span className="text-outline">{q.status}</span>
+                </li>
+              ))}
+            </ul>
+          )}
+          <a href="/devis" className="inline-block mt-md text-label-sm text-primary hover:underline">Voir tous les devis →</a>
+        </ChartCard>
+      </div>
+
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-lg mb-xl">
         <ChartCard title="Statuts des devis par mois">
           <ResponsiveContainer width="100%" height={220}>
-            <BarChart data={DEVIS_DATA} barGap={4}>
+            <BarChart data={devisData} barGap={4}>
               <CartesianGrid strokeDasharray="3 3" vertical={false} />
               <XAxis dataKey="mois" tick={{ fontSize: 12, fill: "#737685" }} axisLine={false} tickLine={false} />
               <YAxis tick={{ fontSize: 12, fill: "#737685" }} axisLine={false} tickLine={false} />

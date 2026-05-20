@@ -365,7 +365,7 @@ export function AppProvider({ children }) {
     setLoading(true);
     setError(null);
     try {
-      const data = await apiFetch("/stats", { token });
+      const data = await apiFetch("/stats/overview", { token });
       setDashboardStats(data);
       return data;
     } catch (err) {
@@ -392,6 +392,7 @@ export function AppProvider({ children }) {
 
     socket.on("newQuote", () => {
       fetchDevis();
+      fetchDashboardStats();
       addNotification({ type: "quote", title: "Nouveau devis", message: "Une demande de devis vient d'arriver." });
     });
 
@@ -402,6 +403,7 @@ export function AppProvider({ children }) {
     });
 
     socket.on("newContact", (contact) => {
+      fetchDashboardStats();
       addNotification({
         type: "contact",
         title: "Nouveau contact",
@@ -410,7 +412,7 @@ export function AppProvider({ children }) {
     });
 
     return () => socket.disconnect();
-  }, [token, fetchDevis, addNotification]);
+  }, [token, fetchDevis, fetchDashboardStats, addNotification]);
 
   const value = {
     // Notifications

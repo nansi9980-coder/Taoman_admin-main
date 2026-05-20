@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import clsx from "clsx";
 import { useApp } from "../context/AppContext";
-import { apiFetch } from "../utils/api";
+import { apiFetch, buildUrl } from "../utils/api";
 import { useAuth } from "../context/AuthContext";
 
 const BACKUP_SCHEDULE = {
@@ -74,9 +74,38 @@ export default function Backup() {
     }
   };
 
-  const handleRestore = (backup) => {
-    if (confirm(`Êtes-vous sûr de vouloir restaurer ${backup.name}?`)) {
-      console.log("Restoring backup:", backup.id);
+  const handleDownload = async (backup) => {
+    try {
+      const res = await fetch(buildUrl(`/backups/${backup.id}/download`), {
+        headers: { Authorization: `Bearer ${token}` },
+        cache: "no-store",
+      });
+      if (!res.ok) throw new Error("Téléchargement impossible");
+      const blob = await res.blob();
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = backup.name || "backup.json";
+      a.click();
+      window.URL.revokeObjectURL(url);
+    } catch (err) {
+      alert("Erreur: " + err.message);
+    }
+  };
+
+  const handleRestore = async (backup) => {
+    const confirmText = window.prompt(
+      `ATTENTION : la restauration écrase les données actuelles.\nTapez RESTAURER pour confirmer :`
+    );
+    if (confirmText !== "RESTAURER") return;
+    setIsRunning(true);
+    try {
+      await apiFetch(`/backups/${backup.id}/restore`, { method: "POST", token });
+      alert("Restauration terminée.");
+    } catch (err) {
+      alert("Erreur restauration: " + err.message);
+    } finally {
+      setIsRunning(false);
     }
   };
 
@@ -247,6 +276,19 @@ export default function Backup() {
 
                   {/* Actions */}
                   <div className="flex gap-sm" onClick={(e) => e.stopPropagation()}>
+                    <button
+                      type="button"
+                      onClick={() => handleDownload(backup)}
+                      disabled={backup.status !== "success" && backup.status !== "Complété"}
+                      className={clsx(
+                        "px-md py-sm rounded-lg font-label-md transition-colors duration-150",
+                        (backup.status === "success" || backup.status === "Complété")
+                          ? "bg-primary text-on-primary dark:bg-[#b2c5ff] dark:text-primary hover:bg-primary-container"
+                          : "bg-surface-container-high dark:bg-[#282a36] text-on-surface-variant dark:text-[#8e90a2] opacity-50 cursor-not-allowed"
+                      )}
+                    >
+                      Télécharger
+                    </button>
                     <button
                       onClick={() => handleRestore(backup)}
                       disabled={backup.status !== "success" && backup.status !== "Complété"}
