@@ -378,7 +378,13 @@ export function AppProvider({ children }) {
 
   useEffect(() => {
     if (!token) return;
-    const socket = io(API_BASE, { transports: ["websocket"], auth: { token } });
+    const socket = io(API_BASE, {
+      transports: ["polling", "websocket"],
+      auth: { token },
+      reconnection: true,
+      reconnectionAttempts: 8,
+      timeout: 20000,
+    });
 
     socket.on("newLog", (log) => {
       setLogs((prev) => [log, ...prev]);

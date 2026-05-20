@@ -1,5 +1,12 @@
 export const API_BASE = import.meta.env.VITE_API_URL || "http://localhost:3000";
 
+let onUnauthorized = null;
+
+/** Appelé sur 401 — ex. déconnexion automatique (AuthContext) */
+export function setUnauthorizedHandler(handler) {
+  onUnauthorized = typeof handler === "function" ? handler : null;
+}
+
 export function buildUrl(path) {
   return `${API_BASE}${path.startsWith("/") ? "" : "/"}${path}`;
 }
@@ -44,8 +51,16 @@ export async function apiFetch(path, options = {}) {
   }
 
   if (!response.ok) {
-    const message = data?.message || data?.error || response.statusText || "Erreur API";
-    throw new Error(message);
+    if (response.status === 401) {
+      onUnauthorized?.();
+    }
+    const message =
+      response.status === 401
+        ? "Session expirée ou non autorisée. Reconnectez-vous."
+        : data?.message || data?.error || response.statusText || "Erreur API";
+    const err = new Error(message);
+    err.status = response.status;
+    throw err;
   }
 
   return data;

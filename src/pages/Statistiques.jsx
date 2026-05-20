@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { AreaChart, Area, BarChart, Bar, PieChart, Pie, Cell, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend, LineChart, Line } from "recharts";
 import clsx from "clsx";
 import { useApp } from "../context/AppContext";
+import { useAuth } from "../context/AuthContext";
 
 const INSCRIPTIONS_DATA = [
   { mois: "Jan", inscriptions: 12 },
@@ -45,12 +46,14 @@ const KPI_CARDS = [
 
 export default function Statistiques() {
   const { dashboardStats, fetchDashboardStats, loading, error } = useApp();
+  const { token } = useAuth();
   const [period, setPeriod] = useState("6m");
   const [selectedMetric, setSelectedMetric] = useState("inscriptions");
 
   useEffect(() => {
+    if (!token) return;
     fetchDashboardStats();
-  }, [fetchDashboardStats]);
+  }, [token, fetchDashboardStats]);
 
   const stats = dashboardStats || {};
   

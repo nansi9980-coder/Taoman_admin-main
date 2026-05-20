@@ -1,5 +1,5 @@
-import { createContext, useContext, useState } from "react";
-import { apiFetch } from "../utils/api";
+import { createContext, useContext, useState, useEffect } from "react";
+import { apiFetch, setUnauthorizedHandler } from "../utils/api";
 
 const AuthContext = createContext(null);
 const STORAGE_KEY = "taoman-admin-session";
@@ -64,6 +64,11 @@ export function AuthProvider({ children }) {
     setSession(null);
     localStorage.removeItem(STORAGE_KEY);
   };
+
+  useEffect(() => {
+    setUnauthorizedHandler(() => logout());
+    return () => setUnauthorizedHandler(null);
+  }, []);
 
   const hasPermission = (permission) => {
     return session?.user?.permissions?.includes(permission) ?? false;
