@@ -4,6 +4,7 @@ import { useAuth } from "../context/AuthContext";
 import { apiFetch, buildUrl } from "../utils/api";
 import MediaPicker from "../components/MediaPicker";
 import { parseSectionContent } from "../utils/sectionContent";
+import { textOnBackground } from "../utils/applyThemePalette";
 
 const DEFAULT_SIMULATOR = {
   investment: "500000",
@@ -54,12 +55,29 @@ export default function Parametres() {
     }
   };
 
+  const reloadThemes = async () => {
+    const res = await fetch(buildUrl("/theme"));
+    setThemes(await res.json());
+    await fetchActiveTheme();
+  };
+
   const handleInitThemes = async () => {
     try {
       await fetch(buildUrl("/theme/init"), { method: "POST" });
-      const res = await fetch(buildUrl("/theme"));
-      setThemes(await res.json());
-      await fetchActiveTheme();
+      await reloadThemes();
+      setSaveMsg("Palettes initialisées.");
+      setTimeout(() => setSaveMsg(""), 4000);
+    } catch (e) {
+      console.error(e);
+    }
+  };
+
+  const handleSeedPresets = async () => {
+    try {
+      await fetch(buildUrl("/theme/seed-presets"), { method: "POST" });
+      await reloadThemes();
+      setSaveMsg("Nouvelles palettes ajoutées ou mises à jour.");
+      setTimeout(() => setSaveMsg(""), 4000);
     } catch (e) {
       console.error(e);
     }
@@ -132,40 +150,67 @@ export default function Parametres() {
 
       <div className="card max-w-3xl">
         <h3 className="font-headline-md text-headline-md mb-md">Palettes de couleurs</h3>
-        <p className="text-body-md text-on-surface-variant mb-lg">
-          Modifie l'apparence de l'admin et du site vitrine (couleur principale).
+        <p className="text-body-md text-on-surface-variant mb-md">
+          Modifie l'apparence de l'admin et du site vitrine. Les textes s'adaptent automatiquement pour rester lisibles.
         </p>
-
-        {themes.length === 0 ? (
-          <button onClick={handleInitThemes} className="btn-primary">
-            Initialiser les thèmes par défaut
+        <div className="flex flex-wrap gap-sm mb-lg">
+          {themes.length === 0 && (
+            <button type="button" onClick={handleInitThemes} className="btn-primary">
+              Initialiser les palettes
+            </button>
+          )}
+          <button type="button" onClick={handleSeedPresets} className="btn-secondary">
+            Ajouter les palettes recommandées
           </button>
-        ) : (
+        </div>
+
+        {themes.length > 0 && (
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-md">
-            {themes.map((t) => (
-              <div
-                key={t.id}
-                onClick={() => handleSetTheme(t.id)}
-                className={`p-md rounded-xl border-2 cursor-pointer transition-all ${
-                  activePalette?.id === t.id
-                    ? "border-primary bg-primary/10"
-                    : "border-outline-variant hover:border-primary/50"
-                }`}
-              >
-                <div className="flex justify-between items-center mb-sm">
-                  <h4 className="font-semibold text-on-surface">{t.name}</h4>
-                  {activePalette?.id === t.id && (
-                    <span className="material-symbols-outlined text-primary" style={{ fontVariationSettings: "'FILL' 1" }}>check_circle</span>
-                  )}
+            {themes.map((t) => {
+              const textColor = textOnBackground(t.surface);
+              return (
+                <div
+                  key={t.id}
+                  role="button"
+                  tabIndex={0}
+                  onClick={() => handleSetTheme(t.id)}
+                  onKeyDown={(e) => e.key === "Enter" && handleSetTheme(t.id)}
+                  className={`rounded-xl border-2 cursor-pointer transition-all overflow-hidden ${
+                    activePalette?.id === t.id
+                      ? "border-primary ring-2 ring-primary/30"
+                      : "border-outline-variant hover:border-primary/50"
+                  }`}
+                >
+                  <div className="flex justify-between items-center p-md pb-sm bg-surface">
+                    <h4 className="font-semibold text-on-surface">{t.name}</h4>
+                    {activePalette?.id === t.id && (
+                      <span className="material-symbols-outlined text-primary" style={{ fontVariationSettings: "'FILL' 1" }}>check_circle</span>
+                    )}
+                  </div>
+                  <div className="flex gap-1 px-md pb-sm">
+                    <div className="h-2 flex-1 rounded-full" style={{ backgroundColor: t.primary }} title="Primaire" />
+                    <div className="h-2 flex-1 rounded-full" style={{ backgroundColor: t.secondary }} title="Secondaire" />
+                  </div>
+                  <div
+                    className="mx-md mb-md rounded-lg p-md border border-outline-variant/40"
+                    style={{ backgroundColor: t.surface, color: textColor }}
+                  >
+                    <p className="text-label-sm font-bold mb-xs" style={{ color: t.primary }}>
+                      Aperçu titre
+                    </p>
+                    <p className="text-body-sm opacity-90">
+                      Texte lisible sur le fond — bouton exemple
+                    </p>
+                    <span
+                      className="inline-block mt-sm px-md py-xs rounded-lg text-label-sm font-semibold"
+                      style={{ backgroundColor: t.primary, color: textOnBackground(t.primary) }}
+                    >
+                      Action
+                    </span>
+                  </div>
                 </div>
-                <div className="flex gap-xs">
-                  <div className="w-8 h-8 rounded-full border shadow-sm" style={{ backgroundColor: t.primary }} title="Primary" />
-                  <div className="w-8 h-8 rounded-full border shadow-sm" style={{ backgroundColor: t.secondary }} title="Secondary" />
-                  <div className="w-8 h-8 rounded-full border shadow-sm" style={{ backgroundColor: t.surface }} title="Surface" />
-                  <div className="w-8 h-8 rounded-full border shadow-sm" style={{ backgroundColor: t.background }} title="Background" />
-                </div>
-              </div>
-            ))}
+              );
+            })}
           </div>
         )}
       </div>

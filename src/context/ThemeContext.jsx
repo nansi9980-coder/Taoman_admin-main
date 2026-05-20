@@ -1,5 +1,6 @@
 import { createContext, useContext, useEffect, useState } from "react";
 import { buildUrl } from "../utils/api";
+import { applyThemePalette } from "../utils/applyThemePalette";
 
 // Modes: "light" | "dark" | "system"
 const ThemeContext = createContext(null);
@@ -43,12 +44,6 @@ export function ThemeProvider({ children }) {
       const theme = await res.json();
       if (theme) {
         setActivePalette(theme);
-        const root = document.documentElement;
-        // Simple hex injection. Note: if Tailwind needs rgb variables, we would convert hex to rgb here.
-        root.style.setProperty('--color-primary', theme.primary);
-        root.style.setProperty('--color-secondary', theme.secondary);
-        if (theme.surface) root.style.setProperty('--color-surface', theme.surface);
-        if (theme.background) root.style.setProperty('--color-background', theme.background);
       }
     } catch (e) {
       console.error(e);
@@ -58,6 +53,13 @@ export function ThemeProvider({ children }) {
   useEffect(() => {
     fetchActiveTheme();
   }, []);
+
+  useEffect(() => {
+    if (!activePalette) return;
+    if (resolvedTheme === "light") {
+      applyThemePalette(activePalette);
+    }
+  }, [activePalette, resolvedTheme]);
 
   const setTheme = (newMode) => {
     setMode(newMode);
