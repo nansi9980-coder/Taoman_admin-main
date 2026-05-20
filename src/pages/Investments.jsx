@@ -99,7 +99,7 @@ export default function Investments() {
         >
           Ajouter
         </button>
-      </motion.div>
+      </div>
 
       {/* KPIs */}
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-md">
