@@ -1,4 +1,4 @@
-import cmsV2Defaults from "../../../shared/cms-v2-defaults.json";
+import cmsV2Defaults from "../data/cms-v2-defaults.json";
 
 const CMS_V2_KEYS = [
   "legal",

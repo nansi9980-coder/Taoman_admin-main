@@ -1,0 +1,176 @@
+{
+  "legal": {
+    "title": "Mentions Légales",
+    "subtitle": "Informations légales de TAOMAN Groupe Investissement",
+    "blocks": [
+      {
+        "title": "1. Éditeur du site",
+        "body": "Le présent site est édité par TAOMAN Groupe Investissement, entreprise de services basée à Vakpossito, Lomé, Togo.",
+        "listItems": [
+          "Email : taomancontact@gmail.com",
+          "Téléphone : +228 90 42 13 77",
+          "Adresse : Vakpossito, Lomé – Togo"
+        ]
+      },
+      {
+        "title": "2. Hébergement",
+        "body": "Le site est hébergé par un prestataire tiers. Pour toute question relative à l'hébergement, veuillez nous contacter à l'adresse indiquée ci-dessus."
+      },
+      {
+        "title": "3. Propriété intellectuelle",
+        "body": "L'ensemble des contenus présents sur ce site (textes, images, logos, graphiques) est la propriété exclusive de TAOMAN Groupe Investissement et est protégé par les lois en vigueur sur la propriété intellectuelle. Toute reproduction, même partielle, est strictement interdite sans autorisation préalable."
+      },
+      {
+        "title": "4. Limitation de responsabilité",
+        "body": "TAOMAN Groupe Investissement s'efforce d'assurer l'exactitude et la mise à jour des informations diffusées sur ce site. Toutefois, nous ne pouvons garantir l'exactitude, la précision ou l'exhaustivité des informations mises à disposition. En conséquence, TAOMAN Groupe Investissement décline toute responsabilité pour toute imprécision ou omission portant sur les informations disponibles sur ce site."
+      },
+      {
+        "title": "5. Contact",
+        "body": "Pour toute question ou réclamation concernant le présent site, vous pouvez nous contacter via notre page de contact (/contact)."
+      }
+    ]
+  },
+  "privacy": {
+    "title": "Politique de Confidentialité",
+    "subtitle": "Comment nous protégeons vos données personnelles",
+    "blocks": [
+      {
+        "title": "1. Collecte des données",
+        "body": "TAOMAN Groupe Investissement collecte des données personnelles lorsque vous utilisez nos formulaires de contact, de devis ou d'inscription. Ces données incluent notamment votre nom, adresse email, numéro de téléphone et toute information que vous nous communiquez volontairement."
+      },
+      {
+        "title": "2. Utilisation des données",
+        "body": "Les données collectées sont utilisées uniquement dans les buts suivants :",
+        "listItems": [
+          "Traitement de vos demandes de services ou de devis",
+          "Gestion de votre compte client",
+          "Envoi d'informations relatives à nos services (avec votre consentement)",
+          "Amélioration de notre site et de nos services"
+        ]
+      },
+      {
+        "title": "3. Conservation des données",
+        "body": "Vos données personnelles sont conservées pendant la durée nécessaire à la réalisation des finalités pour lesquelles elles ont été collectées, dans le respect des obligations légales applicables."
+      },
+      {
+        "title": "4. Partage des données",
+        "body": "TAOMAN Groupe Investissement ne vend ni ne loue vos données personnelles à des tiers. Vos données ne sont partagées qu'avec les prestataires nécessaires à la réalisation de nos services, et uniquement dans ce cadre strict."
+      },
+      {
+        "title": "5. Vos droits",
+        "body": "Conformément à la réglementation en vigueur, vous disposez des droits suivants concernant vos données personnelles :",
+        "listItems": [
+          "Droit d'accès à vos données",
+          "Droit de rectification",
+          "Droit à l'effacement (droit à l'oubli)",
+          "Droit d'opposition au traitement",
+          "Droit à la portabilité de vos données"
+        ],
+        "footer": "Pour exercer ces droits, contactez-nous à taomancontact@gmail.com."
+      },
+      {
+        "title": "6. Cookies",
+        "body": "Notre site peut utiliser des cookies pour améliorer votre expérience de navigation. Vous pouvez à tout moment désactiver les cookies via les paramètres de votre navigateur. Le refus des cookies peut limiter certaines fonctionnalités du site."
+      }
+    ]
+  },
+  "terms": {
+    "title": "Nos Termes & Conditions",
+    "subtitle": "Conditions d'utilisation de nos services",
+    "footerNote": "Dernière mise à jour: 11 mai 2026 | Copyright © 2026 TAOMAN-GROUPE. Tous droits réservés.",
+    "blocks": [
+      {
+        "title": "1. Acceptation des Conditions",
+        "body": "En accédant et en utilisant ce site web, vous acceptez d'être lié par ces termes et conditions. Si vous n'acceptez pas les termes énoncés ici, veuillez ne pas utiliser ce site."
+      },
+      {
+        "title": "2. Utilisation du Site",
+        "body": "Vous vous engagez à utiliser ce site uniquement à des fins légales et de manière à ne pas violer les droits d'autrui ou à restreindre leur utilisation et leur plaisir du site web. Le comportement prohibé comprend :",
+        "listItems": [
+          "Harceler ou causer de la détresse ou de la gêne",
+          "Transmettre des messages obscènes ou offensants",
+          "Perturber le flux normal de la conversation",
+          "Utiliser un langage violent",
+          "Transmettre du contenu sexuellement explicite ou violent"
+        ]
+      },
+      {
+        "title": "3. Contenu Utilisateur",
+        "body": "Vous conservez tous les droits relatifs au contenu que vous soumettez, publiez ou affichez sur ou via ce site. En soumettant du contenu utilisateur, vous accordez à TAOMAN-GROUPE une licence mondiale, non exclusive, gratuite et libre de droits d'auteur."
+      },
+      {
+        "title": "4. Limitation de Responsabilité",
+        "body": "TAOMAN-GROUPE ne sera pas responsable des dommages directs, indirects, spéciaux, consécutifs ou punitifs résultant de votre utilisation du site ou de votre incapacité à utiliser le site ou le contenu."
+      },
+      {
+        "title": "5. Services et Tarifs",
+        "body": "Les services offerts par TAOMAN-GROUPE sont décrits sur ce site. Nous nous réservons le droit de modifier les services et les tarifs sans préavis. Toute modification des tarifs sera effective après une période de notification appropriée."
+      },
+      {
+        "title": "6. Investissements",
+        "body": "Les investissements offerts par TAOMAN-GROUPE comportent des risques. Les performances passées ne garantissent pas les résultats futurs. Avant d'investir, consultez nos documents d'information et demandez des conseils à un professionnel financier qualifié. TAOMAN-GROUPE ne peut garantir des rendements spécifiques."
+      },
+      {
+        "title": "7. Confidentialité des Données",
+        "body": "TAOMAN-GROUPE prend la protection de vos données personnelles au sérieux. Consultez notre Politique de Confidentialité pour comprendre comment nous collectons, utilisons et protégeons vos informations."
+      },
+      {
+        "title": "8. Propriété Intellectuelle",
+        "body": "Tout le contenu de ce site web est la propriété de TAOMAN-GROUPE ou de ses fournisseurs de contenu et est protégé par les lois internationales sur le droit d'auteur."
+      },
+      {
+        "title": "9. Liens vers des Sites Tiers",
+        "body": "Ce site web peut contenir des liens vers d'autres sites web. TAOMAN-GROUPE n'est pas responsable du contenu, de la précision ou des pratiques de ces sites externes."
+      },
+      {
+        "title": "10. Modifications des Conditions",
+        "body": "TAOMAN-GROUPE se réserve le droit de modifier ces conditions à tout moment. Les modifications entrent en vigueur immédiatement après leur publication sur le site."
+      },
+      {
+        "title": "11. Droit Applicable",
+        "body": "Ces conditions sont régies par les lois du Togo, et vous acceptez la juridiction des tribunaux compétents dans ce domaine."
+      },
+      {
+        "title": "12. Contact",
+        "body": "Pour toute question concernant ces Termes et Conditions :",
+        "listItems": [
+          "TAOMAN-GROUPE",
+          "Email: taomancontact@gmail.com",
+          "Téléphone: +228 91535682",
+          "Adresse: Adewi, Lomé, Togo"
+        ]
+      }
+    ]
+  },
+  "jobs": {
+    "title": "Rejoignez notre équipe",
+    "subtitle": "TAOMAN Groupe Investissement recrute des talents motivés pour contribuer à nos projets ambitieux d'investissement et de services professionnels.",
+    "filterTitle": "Filtrer par catégorie",
+    "emptyMessage": "Aucune offre disponible pour le moment. Revenez bientôt ou contactez-nous.",
+    "categories": [
+      { "value": "all", "label": "Tous les postes" },
+      { "value": "btp", "label": "BTP" },
+      { "value": "transport", "label": "Transport & Logistique" },
+      { "value": "agro", "label": "Agrobusiness" },
+      { "value": "entretien", "label": "Entretien" },
+      { "value": "admin", "label": "Administration" },
+      { "value": "tech", "label": "Technologie" }
+    ]
+  },
+  "devisLavage": {
+    "title": "Obtenez votre devis de lavage gratuit !",
+    "subtitle": "Nos équipes certifiées sont prêtes à offrir le meilleur service de nettoyage automobile pour votre véhicule"
+  },
+  "devisDemenagement": {
+    "title": "Devis Déménagement",
+    "subtitle": "Spécialiste du déménagement premium, TAOMAN-GROUPE offre aux entreprises et particuliers une gamme complète de services de déménagement de qualité supérieure."
+  },
+  "devisBureaux": {
+    "title": "Obtenez votre devis gratuit pour l'entretien des bureaux !",
+    "subtitle": "Services complets d'entretien et de nettoyage pour vos espaces de bureaux professionnels"
+  },
+  "devisClimatisation": {
+    "title": "Obtenez votre devis gratuit pour l'entretien de climatisation !",
+    "subtitle": "Installation, réparation et maintenance de systèmes de climatisation professionnels"
+  }
+}
