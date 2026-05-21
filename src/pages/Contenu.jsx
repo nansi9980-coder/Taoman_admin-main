@@ -314,7 +314,7 @@ export default function Contenu() {
                 return (
                   <article
                     key={sectionKey}
-                    className="rounded-xl border border-outline-variant bg-surface p-lg shadow-sm"
+                    className="rounded-xl border border-outline-variant bg-surface p-lg shadow-sm transition-shadow duration-200 hover:shadow-md"
                   >
                     <div className="flex flex-wrap items-start justify-between gap-md mb-md">
                       <div className="flex items-center gap-3">

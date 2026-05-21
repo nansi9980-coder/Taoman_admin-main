@@ -73,8 +73,14 @@
   /* Sidebar link active state */
   .nav-link {
     @apply flex items-center gap-md px-lg py-md rounded-lg text-on-surface-variant
-           hover:text-primary hover:bg-surface-container-low transition-colors duration-150
-           text-label-md cursor-pointer select-none;
+           hover:text-primary hover:bg-surface-container-low transition-all duration-200
+           text-label-md cursor-pointer select-none hover:translate-x-0.5;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .nav-link:hover {
+      transform: none;
+    }
   }
 
   .nav-link.active {
@@ -99,7 +105,14 @@
   /* Stat card */
   .stat-card {
     @apply bg-surface-container-lowest border border-outline-variant rounded-xl p-lg
-           shadow-card flex flex-col justify-between hover:shadow-card-hover transition-shadow duration-200;
+           shadow-card flex flex-col justify-between cursor-pointer
+           hover:shadow-card-hover hover:-translate-y-0.5 transition-all duration-200;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .stat-card:hover {
+      transform: none;
+    }
   }
 
   .dark .stat-card {
@@ -110,15 +123,26 @@
   /* Primary button */
   .btn-primary {
     @apply flex items-center gap-xs px-lg py-sm bg-primary text-on-primary rounded-lg
-           text-label-md shadow-sm hover:opacity-90 active:scale-95
-           transition-all duration-150 disabled:opacity-50 disabled:cursor-not-allowed;
+           text-label-md shadow-sm cursor-pointer hover:opacity-90 hover:scale-[1.02]
+           active:scale-95 transition-all duration-150 disabled:opacity-50 disabled:cursor-not-allowed;
   }
 
   /* Secondary button */
   .btn-secondary {
     @apply flex items-center gap-xs px-lg py-sm border border-outline text-on-surface-variant
-           rounded-lg text-label-md hover:bg-surface-container-low
-           transition-colors duration-150 disabled:opacity-50 disabled:cursor-not-allowed;
+           rounded-lg text-label-md cursor-pointer hover:bg-surface-container-low hover:scale-[1.02]
+           transition-all duration-150 disabled:opacity-50 disabled:cursor-not-allowed;
+  }
+
+  .interactive-row {
+    @apply cursor-pointer transition-colors duration-150 hover:bg-surface-container-low;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .btn-primary:hover,
+    .btn-secondary:hover {
+      transform: none;
+    }
   }
 
   /* Danger button */

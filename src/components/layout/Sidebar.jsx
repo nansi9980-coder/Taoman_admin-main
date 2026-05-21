@@ -30,7 +30,7 @@ function NavItem({ to, icon, label }) {
       end={to === "/"}
       className={({ isActive }) =>
         clsx(
-          "flex items-center gap-md px-lg py-[10px] rounded-lg font-label-md text-label-md transition-colors duration-150 cursor-pointer select-none",
+          "nav-link flex items-center gap-md px-lg py-[10px] rounded-lg font-label-md text-label-md transition-all duration-200 cursor-pointer select-none",
           isActive
             ? "text-primary dark:text-[#b2c5ff] font-bold bg-surface-container-low dark:bg-[#1e1f2a] border-r-2 border-primary dark:border-[#b2c5ff]"
             : "text-on-surface-variant dark:text-[#8e90a2] hover:text-primary dark:hover:text-[#b2c5ff] hover:bg-surface-container-low dark:hover:bg-[#1e1f2a]"
