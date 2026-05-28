@@ -131,22 +131,40 @@ export default function SectionReadOnly({ sectionKey, content, savedInDb }) {
 
     case "sectors":
     case "testimonials":
+    case "realisations":
       return wrap(
         <div className="space-y-md">
+          {sectionKey === "realisations" && content.footerText && (
+            <p className="text-body-sm text-on-surface-variant">{content.footerText}</p>
+          )}
           {(content.items || []).map((item, i) => (
             <div key={i} className="flex gap-md p-sm border border-outline-variant/30 rounded-lg">
               {item.imageUrl && <Img url={item.imageUrl} />}
               <div>
                 <p className="font-bold">{item.title || item.name}</p>
+                {item.category && <p className="text-label-sm text-primary">{item.category}</p>}
                 {item.role && <p className="text-label-sm text-primary">{item.role}</p>}
                 <p className="text-on-surface-variant whitespace-pre-wrap">
                   {item.description || item.comment || item.answer}
                 </p>
+                {sectionKey === "realisations" && item.progress !== undefined && (
+                  <p className="text-label-sm text-on-surface-variant mt-xs">Progression: {item.progress}%</p>
+                )}
                 {item.question && <p className="font-semibold mt-xs">{item.question}</p>}
               </div>
             </div>
           ))}
         </div>
+      );
+
+    case "mediaSettings":
+      return wrap(
+        <>
+          <Row label="Intervalle autoplay" value={`${content.autoplayInterval ?? 4500} ms`} />
+          <Row label="Durée transition" value={`${content.transitionMs ?? 800} ms`} />
+          <Row label="Autoplay" value={(content.autoplayEnabled ?? true) ? "Activé" : "Désactivé"} />
+          <Row label="Pause au survol" value={(content.pauseOnHover ?? true) ? "Activée" : "Désactivée"} />
+        </>
       );
 
     case "faq":

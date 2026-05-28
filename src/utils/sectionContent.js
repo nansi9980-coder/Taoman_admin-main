@@ -21,6 +21,8 @@ export const SECTION_PREVIEW_PATHS = {
   hero: "/",
   about: "/about",
   faq: "/faq",
+  realisations: "/",
+  mediaSettings: "/",
   contact: "/contact",
   cta: "/",
   footer: "/",
@@ -46,7 +48,7 @@ export const VITRINE_PAGE_GROUPS = [
     id: "home",
     label: "Accueil",
     path: "/",
-    sections: ["hero", "statistics", "sectors", "testimonials", "cta"],
+    sections: ["hero", "statistics", "sectors", "realisations", "testimonials", "cta", "mediaSettings"],
   },
   {
     id: "about",
@@ -95,8 +97,10 @@ export const VITRINE_PAGE_GROUPS = [
 export const SITE_SECTION_META = {
   hero: { emoji: "🏠", label: "Bandeau Hero", description: "Titre, badges et boutons (accueil)" },
   about: { emoji: "🏢", label: "Page À propos", description: "Mission, équipe dirigeante, parcours" },
-  statistics: { emoji: "📊", label: "Statistiques accueil", description: "Chiffres clés" },
+  statistics: { emoji: "📊", label: "Notre impact", description: "Chiffres clés de la section impact" },
   sectors: { emoji: "🏗️", label: "Secteurs", description: "Cartes secteurs d'investissement" },
+  realisations: { emoji: "🖼️", label: "Réalisations terrain", description: "Images, titres et texte pro sous la galerie" },
+  mediaSettings: { emoji: "⚙️", label: "Vitesse défilement médias", description: "Autoplay et options de défilement" },
   testimonials: { emoji: "💬", label: "Témoignages", description: "Avis clients" },
   cta: { emoji: "📣", label: "Bannière CTA", description: "Appel à l'action accueil" },
   faq: { emoji: "❓", label: "FAQ", description: "Questions fréquentes" },
@@ -231,7 +235,24 @@ export function getDefaultSectionContent(key) {
           { title: "BTP & Immobilier", description: "Projets de construction durable", imageUrl: "" },
           { title: "Agro & Énergie", description: "Agriculture moderne et énergies renouvelables", imageUrl: "" },
           { title: "Transport & Logistique", description: "Solutions logistiques intégrées", imageUrl: "" },
+          { title: "Marketing International", description: "Visibilité de marque, acquisition internationale et croissance export", imageUrl: "" },
         ],
+      };
+    case "realisations":
+      return {
+        footerText:
+          "TAOMAN Group Investment transforme les opérations terrain en résultats mesurables : chaque réalisation est suivie, documentée et alignée sur nos standards de qualité.",
+        items: [],
+      };
+    case "mediaSettings":
+      return {
+        autoplayInterval: 4500,
+        autoplayEnabled: true,
+        pauseOnHover: true,
+        transitionMs: 800,
+        showIndicators: true,
+        showArrows: true,
+        kenBurns: true,
       };
     case "testimonials":
       return {
@@ -372,7 +393,7 @@ export function prepareContentForEditor(key, texts) {
     return normalizeStatsForEditor(effective);
   }
   if (key === "about") return normalizeAboutForEditor(effective);
-  if (["sectors", "testimonials", "faq"].includes(key)) {
+  if (["sectors", "testimonials", "faq", "realisations"].includes(key)) {
     const items = effective.items?.length ? effective.items : getDefaultSectionContent(key).items || [{}];
     return { ...effective, items };
   }

@@ -155,6 +155,45 @@ export default function SectionEditorFields({
     );
   }
 
+  if (sectionKey === "mediaSettings") {
+    return (
+      <div className="space-y-md">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-md">
+          <div>
+            <label className="text-label-sm text-on-surface-variant">Intervalle autoplay (ms)</label>
+            <input
+              type="number"
+              min={1000}
+              step={100}
+              className="input-field"
+              value={content.autoplayInterval ?? 4500}
+              onChange={(e) => updateContentField({ autoplayInterval: Number(e.target.value || 4500) })}
+            />
+          </div>
+          <div>
+            <label className="text-label-sm text-on-surface-variant">Durée transition (ms)</label>
+            <input
+              type="number"
+              min={100}
+              step={50}
+              className="input-field"
+              value={content.transitionMs ?? 800}
+              onChange={(e) => updateContentField({ transitionMs: Number(e.target.value || 800) })}
+            />
+          </div>
+        </div>
+        <label className="flex items-center gap-sm">
+          <input type="checkbox" checked={content.autoplayEnabled ?? true} onChange={(e) => updateContentField({ autoplayEnabled: e.target.checked })} />
+          Activer le défilement automatique
+        </label>
+        <label className="flex items-center gap-sm">
+          <input type="checkbox" checked={content.pauseOnHover ?? true} onChange={(e) => updateContentField({ pauseOnHover: e.target.checked })} />
+          Pause au survol
+        </label>
+      </div>
+    );
+  }
+
   if (["legal", "privacy", "terms"].includes(sectionKey)) {
     const blocks = content.blocks?.length ? content.blocks : [{ title: "", body: "", listItems: [] }];
     return (
@@ -287,10 +326,26 @@ export default function SectionEditorFields({
     );
   }
 
-  if (["testimonials", "sectors", "faq"].includes(sectionKey)) {
-    const empty = sectionKey === "faq" ? { question: "", answer: "" } : sectionKey === "testimonials" ? { name: "", role: "", comment: "" } : { title: "", description: "", imageUrl: "" };
+  if (["testimonials", "sectors", "faq", "realisations"].includes(sectionKey)) {
+    const empty =
+      sectionKey === "faq"
+        ? { question: "", answer: "" }
+        : sectionKey === "testimonials"
+          ? { name: "", role: "", comment: "" }
+          : sectionKey === "realisations"
+            ? { title: "", category: "", progress: 70, imageUrl: "" }
+            : { title: "", description: "", imageUrl: "" };
     return (
       <div className="space-y-md">
+        {sectionKey === "realisations" && (
+          <textarea
+            className="input-field resize-none"
+            rows={3}
+            value={content.footerText || ""}
+            onChange={(e) => updateContentField({ footerText: e.target.value })}
+            placeholder="Texte professionnel affiché sous la section Réalisations terrain"
+          />
+        )}
         {(ensureItems(content, [empty]).items || []).map((item, index) => (
           <div key={index} className="p-md border border-outline-variant rounded-lg space-y-sm">
             <div className="flex justify-between">
@@ -310,11 +365,23 @@ export default function SectionEditorFields({
                 <input className="input-field" value={item.role || ""} onChange={(e) => updateListItem(index, "role", e.target.value)} />
                 <textarea className="input-field resize-none" rows={3} value={item.comment || ""} onChange={(e) => updateListItem(index, "comment", e.target.value)} />
               </>
+            ) : sectionKey === "realisations" ? (
+              <>
+                <input className="input-field" placeholder="Titre de l'image" value={item.title || ""} onChange={(e) => updateListItem(index, "title", e.target.value)} />
+                <input className="input-field" placeholder="Catégorie" value={item.category || ""} onChange={(e) => updateListItem(index, "category", e.target.value)} />
+                <input className="input-field" type="number" min={0} max={100} placeholder="Progression %" value={item.progress ?? 70} onChange={(e) => updateListItem(index, "progress", Number(e.target.value || 70))} />
+                <MediaPicker label="Image réalisation" value={item.imageUrl || ""} onChange={(url) => updateListItem(index, "imageUrl", url)} />
+              </>
             ) : (
               <>
                 <input className="input-field" value={item.title || ""} onChange={(e) => updateListItem(index, "title", e.target.value)} />
                 <textarea className="input-field resize-none" rows={2} value={item.description || ""} onChange={(e) => updateListItem(index, "description", e.target.value)} />
                 <MediaPicker label="Image" value={item.imageUrl || ""} onChange={(url) => updateListItem(index, "imageUrl", url)} />
+                {sectionKey === "sectors" && (
+                  <p className="text-label-sm text-on-surface-variant">
+                    Recommandé : image nette 1400x1000 px minimum, ratio paysage.
+                  </p>
+                )}
               </>
             )}
           </div>

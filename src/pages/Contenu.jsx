@@ -431,6 +431,9 @@ export default function Contenu() {
             <input className="input-field" placeholder="Icône Material" value={serviceForm.icon} onChange={(e) => setServiceForm({ ...serviceForm, icon: e.target.value })} />
             <textarea required className="input-field resize-none" rows={4} placeholder="Description *" value={serviceForm.description} onChange={(e) => setServiceForm({ ...serviceForm, description: e.target.value })} />
             <MediaPicker label="Image du service" value={serviceForm.imageUrl} onChange={(url) => setServiceForm({ ...serviceForm, imageUrl: url })} />
+            <p className="text-label-sm text-on-surface-variant -mt-2">
+              Conseil qualité image : format paysage, minimum 1200x800 px, poids optimisé (&lt; 1.5 Mo).
+            </p>
             <input className="input-field" placeholder="Texte bouton" value={serviceForm.actionText} onChange={(e) => setServiceForm({ ...serviceForm, actionText: e.target.value })} />
             <input className="input-field" placeholder="Lien" value={serviceForm.actionLink} onChange={(e) => setServiceForm({ ...serviceForm, actionLink: e.target.value })} />
             <label className="flex items-center gap-sm">
