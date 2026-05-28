@@ -1,8 +1,8 @@
-import { buildUrl } from "../utils/api";
+import { resolveMediaUrl } from "../utils/api";
 
 function Img({ url, alt, className = "w-20 h-20 rounded-lg object-cover" }) {
   if (!url) return null;
-  const src = url.startsWith("http") ? url : buildUrl(url);
+  const src = resolveMediaUrl(url);
   return <img src={src} alt={alt || ""} className={className} />;
 }
 
@@ -146,12 +146,7 @@ export default function SectionReadOnly({ sectionKey, content, savedInDb }) {
           >
             {(content.items || []).map((item, i) => {
               const label = item.title || item.name || `Élément ${i + 1}`;
-              const vitrineBase = (import.meta.env.VITE_SITE_URL || import.meta.env.VITE_CLIENT_URL || "").replace(/\/$/, "");
-              const staticUrl =
-                sectionKey === "realisations" && !item.imageUrl && item.staticPreview && vitrineBase
-                  ? `${vitrineBase}${item.staticPreview}`
-                  : "";
-              const previewUrl = item.imageUrl || staticUrl;
+              const previewUrl = item.imageUrl ? resolveMediaUrl(item.imageUrl) : "";
               const hasImage = Boolean(previewUrl);
               return (
                 <div key={item.slug || item.id || item.title || i} className="rounded-xl border border-outline-variant/40 overflow-hidden bg-surface-container-lowest">

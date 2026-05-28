@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { useApp } from "../context/AppContext";
 import { useAuth } from "../context/AuthContext";
-import { apiFetch, buildUrl } from "../utils/api";
+import { apiFetch, buildUrl, resolveMediaUrl } from "../utils/api";
 import clsx from "clsx";
 
 export default function Medias() {
@@ -118,7 +118,7 @@ export default function Medias() {
                   <div className="w-12 h-12 rounded-lg bg-surface-container flex items-center justify-center text-primary overflow-hidden shrink-0">
                     {item.type.includes("image") && item.url ? (
                       <img
-                        src={item.url.startsWith("http") ? item.url : buildUrl(item.url)}
+                        src={resolveMediaUrl(item.url)}
                         alt={item.name}
                         className="w-full h-full object-cover"
                       />
@@ -129,7 +129,7 @@ export default function Medias() {
                     )}
                   </div>
                   <div>
-                    <a href={item.url?.startsWith("http") ? item.url : buildUrl(item.url)} target="_blank" rel="noreferrer" className="text-body-md font-semibold text-primary hover:underline">{item.name}</a>
+                    <a href={resolveMediaUrl(item.url)} target="_blank" rel="noreferrer" className="text-body-md font-semibold text-primary hover:underline">{item.name}</a>
                     <div className="flex items-center gap-sm mt-xs">
                       <span className="text-label-sm px-2 py-0.5 rounded bg-secondary-container text-secondary">{item.category}</span>
                       <span className="text-label-sm text-on-surface-variant dark:text-[#8e90a2]">{item.type}</span>

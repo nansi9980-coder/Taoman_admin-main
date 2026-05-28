@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { useAuth } from "../context/AuthContext";
-import { apiFetch, buildUrl } from "../utils/api";
+import { apiFetch, buildUrl, resolveMediaUrl } from "../utils/api";
 import clsx from "clsx";
 import MediaPicker from "../components/MediaPicker";
 import SectionReadOnly from "../components/SectionReadOnly";
@@ -297,7 +297,7 @@ export default function Contenu() {
     >
       <div className="relative">
         {srv.imageUrl ? (
-          <img src={buildUrl(srv.imageUrl)} alt={srv.title} className="w-full h-40 object-cover object-center" />
+          <img src={resolveMediaUrl(srv.imageUrl)} alt={srv.title} className="w-full h-40 object-cover object-center" />
         ) : (
           <div className="w-full h-40 flex flex-col items-center justify-center bg-surface-container-low text-primary gap-1">
             <span className="text-3xl font-black">{srv.icon || "—"}</span>
@@ -345,8 +345,7 @@ export default function Contenu() {
   const realisationsSavedInDb = hasSectionRecord(texts, "realisations");
 
   const slidePreviewUrl = (slide) => {
-    if (slide.imageUrl) return buildUrl(slide.imageUrl);
-    if (slide.staticPreview && vitrineBase) return `${vitrineBase}${slide.staticPreview}`;
+    if (slide.imageUrl?.trim()) return resolveMediaUrl(slide.imageUrl);
     return "";
   };
 
@@ -607,7 +606,7 @@ export default function Contenu() {
           <form onSubmit={handleServiceSubmit} className="space-y-md pb-lg">
             {serviceForm.imageUrl && (
               <div className="rounded-xl overflow-hidden border border-outline-variant">
-                <img src={buildUrl(serviceForm.imageUrl)} alt={serviceForm.title} className="w-full h-48 object-cover object-center" />
+                <img src={resolveMediaUrl(serviceForm.imageUrl)} alt={serviceForm.title} className="w-full h-48 object-cover object-center" />
                 <p className="text-center font-bold py-2 bg-surface-container-low">{serviceForm.title || "Sans titre"}</p>
               </div>
             )}

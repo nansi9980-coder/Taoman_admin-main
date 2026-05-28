@@ -11,6 +11,21 @@ export function buildUrl(path) {
   return `${API_BASE}${path.startsWith("/") ? "" : "/"}${path}`;
 }
 
+/** URL affichable pour images (Cloudinary, chemins /uploads, etc.) */
+export function resolveMediaUrl(url) {
+  if (!url) return "";
+  const trimmed = String(url).trim();
+  if (
+    trimmed.startsWith("http://") ||
+    trimmed.startsWith("https://") ||
+    trimmed.startsWith("data:") ||
+    trimmed.startsWith("//")
+  ) {
+    return trimmed.startsWith("//") ? `https:${trimmed}` : trimmed;
+  }
+  return buildUrl(trimmed);
+}
+
 export async function apiFetch(path, options = {}) {
   const { token, headers = {}, body, ...rest } = options;
   const mergedHeaders = {

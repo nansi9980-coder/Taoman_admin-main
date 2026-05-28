@@ -1,11 +1,10 @@
 import MediaPicker from "./MediaPicker";
-import { buildUrl } from "../utils/api";
+import { resolveMediaUrl } from "../utils/api";
 import { mergeSectorCmsItems, SECTOR_TEMPLATES } from "../utils/sectorsMerge";
 import { mergeRealisationCmsItems, REALISATION_SLIDE_TEMPLATES } from "../utils/realisationsDefaults";
 
-function PreviewImage({ url, title, staticPreviewUrl }) {
-  const cmsSrc = url && (url.startsWith("http") || url.startsWith("data:") ? url : buildUrl(url));
-  const src = cmsSrc || staticPreviewUrl || "";
+function PreviewImage({ url, title }) {
+  const src = url ? resolveMediaUrl(url) : "";
   return (
     <div className="rounded-xl overflow-hidden border border-outline-variant mb-sm">
       {src ? (
@@ -16,11 +15,6 @@ function PreviewImage({ url, title, staticPreviewUrl }) {
         </div>
       )}
       <p className="text-center font-bold text-sm py-2 bg-surface-container-low">{title || "Sans titre"}</p>
-      {!cmsSrc && staticPreviewUrl && (
-        <p className="text-center text-label-sm text-amber-700 dark:text-amber-300 pb-2 px-2">
-          Aperçu fichier vitrine — remplacez par une image médiathèque puis Enregistrer
-        </p>
-      )}
     </div>
   );
 }
@@ -387,7 +381,6 @@ export default function SectionEditorFields({
   }
 
   if (sectionKey === "realisations") {
-    const vitrineBase = (import.meta.env.VITE_SITE_URL || import.meta.env.VITE_CLIENT_URL || "").replace(/\/$/, "");
     const slides = mergeRealisationCmsItems(content.items || []);
     const syncSlidesToForm = (nextSlides) => {
       setContent({ ...content, items: nextSlides });
@@ -414,20 +407,9 @@ export default function SectionEditorFields({
           onChange={(e) => updateContentField({ footerText: e.target.value })}
           placeholder="Texte sous le carrousel"
         />
-        {slides.map((item, index) => {
-          const staticPreviewUrl =
-            !item.imageUrl && item.staticPreview && vitrineBase
-              ? `${vitrineBase}${item.staticPreview}`
-              : !item.imageUrl && item.staticPreview
-                ? item.staticPreview
-                : "";
-          return (
+        {slides.map((item, index) => (
             <div key={item.id || index} className="p-md border border-outline-variant rounded-lg space-y-sm">
-              <PreviewImage
-                url={item.imageUrl}
-                title={item.title}
-                staticPreviewUrl={staticPreviewUrl}
-              />
+              <PreviewImage url={item.imageUrl} title={item.title} />
               <p className="font-bold text-primary text-label-md">
                 Slide {String(index + 1).padStart(2, "0")} — {REALISATION_SLIDE_TEMPLATES[index]?.title || item.title}
               </p>
@@ -463,8 +445,7 @@ export default function SectionEditorFields({
                 </button>
               )}
             </div>
-          );
-        })}
+        ))}
       </div>
     );
   }

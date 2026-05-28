@@ -1,13 +1,7 @@
 import { useEffect, useState } from "react";
 import clsx from "clsx";
-import { apiFetch, buildUrl } from "../utils/api";
+import { apiFetch, resolveMediaUrl } from "../utils/api";
 import { useAuth } from "../context/AuthContext";
-
-function resolveMediaUrl(url) {
-  if (!url) return "";
-  if (url.startsWith("http") || url.startsWith("data:")) return url;
-  return buildUrl(url);
-}
 
 export default function MediaPicker({ value, onChange, label = "Image" }) {
   const { token } = useAuth();
