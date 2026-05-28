@@ -16,7 +16,13 @@ import {
   aboutEditorToPayload,
   sectorsEditorToPayload,
   realisationsEditorToPayload,
+  heroEditorToPayload,
+  servicesPageEditorToPayload,
+  operationalServicesEditorToPayload,
 } from "../utils/sectionContent";
+import { mergeHeroMosaicBlock } from "../utils/heroMosaicDefaults";
+import { mergeServicesPageHeroSlides } from "../utils/servicesPageHeroDefaults";
+import { mergeOperationalServices } from "../utils/operationalServicesDefaults";
 import { DEFAULT_HOME_SERVICES } from "../utils/homeServicesDefaults";
 import { mergeRealisationCmsItems } from "../utils/realisationsDefaults";
 
@@ -103,6 +109,9 @@ export default function Contenu() {
     if (textForm.section === "about") payload = aboutEditorToPayload(textForm.content);
     if (textForm.section === "sectors") payload = sectorsEditorToPayload(textForm.content);
     if (textForm.section === "realisations") payload = realisationsEditorToPayload(textForm.content);
+    if (textForm.section === "hero") payload = heroEditorToPayload(textForm.content);
+    if (textForm.section === "servicesPage") payload = servicesPageEditorToPayload(textForm.content);
+    if (textForm.section === "operationalServices") payload = operationalServicesEditorToPayload(textForm.content);
     try {
       await apiFetch("/content/texts", {
         method: "POST",
@@ -344,6 +353,17 @@ export default function Contenu() {
   const realisationSlides = mergeRealisationCmsItems(realisationsEffective.items || []);
   const realisationsSavedInDb = hasSectionRecord(texts, "realisations");
 
+  const heroEffective = loading ? { mosaic: { tiles: [] } } : getEffectiveSectionContent("hero", texts);
+  const heroMosaicTiles = mergeHeroMosaicBlock(heroEffective.mosaic || {}).tiles;
+  const heroSavedInDb = hasSectionRecord(texts, "hero");
+
+  const servicesPageEffective = loading ? { heroSlides: [] } : getEffectiveSectionContent("servicesPage", texts);
+  const servicesHeroSlides = mergeServicesPageHeroSlides(servicesPageEffective.heroSlides || []);
+  const servicesPageSavedInDb = hasSectionRecord(texts, "servicesPage");
+  const operationalEffective = loading ? { items: [] } : getEffectiveSectionContent("operationalServices", texts);
+  const operationalCards = mergeOperationalServices(operationalEffective.items || []);
+  const operationalSavedInDb = hasSectionRecord(texts, "operationalServices");
+
   const slidePreviewUrl = (slide) => {
     if (slide.imageUrl?.trim()) return resolveMediaUrl(slide.imageUrl);
     return "";
@@ -380,7 +400,9 @@ export default function Contenu() {
         <p className="font-bold text-primary mb-sm">Où modifier les blocs de la page d&apos;accueil</p>
         <ul className="space-y-1 text-on-surface-variant list-disc pl-5">
           <li><strong>Notre impact</strong> (chiffres 30+, 8 secteurs…) → section <strong>Notre impact</strong> dans le groupe Accueil</li>
-          <li><strong>Services professionnels</strong> (cartes 01–06) → bloc <strong>Services professionnels</strong> juste ci-dessous</li>
+          <li><strong>Hero accueil</strong> (3 photos Excellence) → bloc <strong>Hero page d&apos;accueil</strong></li>
+          <li><strong>Hero /services</strong> (carrousel) → bloc <strong>Hero page Services</strong></li>
+          <li><strong>Services professionnels</strong> (cartes 01–06) → bloc <strong>Services professionnels</strong></li>
           <li><strong>Réalisations terrain</strong> (ex. Conducteur TAOMAN 01) → bloc <strong>Réalisations terrain</strong> ci-dessous</li>
           <li><strong>Nos projets</strong> (menu) = page <strong>Secteurs</strong> → mêmes images que la section <strong>Secteurs</strong></li>
           <li><strong>Vitesse du carrousel</strong> → section <strong>Vitesse défilement médias</strong></li>
@@ -399,14 +421,163 @@ export default function Contenu() {
         </div>
       )}
 
+      <section id="hero-accueil" className="rounded-xl border-2 border-cyan-600/35 bg-surface p-lg shadow-sm space-y-md">
+        <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-md">
+          <div className="flex items-start gap-3">
+            <span className="text-3xl">🏠</span>
+            <div>
+              <h2 className="text-headline-lg font-bold text-on-surface">Hero page d&apos;accueil</h2>
+              <p className="text-body-md text-on-surface-variant mt-sm">
+                Bandeau « Excellence » + <strong>3 photos</strong> (Logistique, Lavage premium, Conducteurs certifiés).
+              </p>
+              <span className={clsx("badge mt-sm", heroSavedInDb ? "badge-success" : "badge-warning")}>
+                {heroSavedInDb ? "Enregistré en base" : "Texte i18n / images par défaut"}
+              </span>
+            </div>
+          </div>
+          <button type="button" onClick={() => openSectionEditor("hero")} className="btn-primary gap-xs shrink-0">
+            <span className="material-symbols-outlined text-[18px]">edit</span>
+            Modifier le hero
+          </button>
+        </div>
+        {!loading && (
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-md">
+            {heroMosaicTiles.map((tile, index) => {
+              const src = tile.imageUrl ? resolveMediaUrl(tile.imageUrl) : "";
+              return (
+                <button
+                  key={tile.id}
+                  type="button"
+                  onClick={() => openSectionEditor("hero")}
+                  className="text-left rounded-xl border border-outline-variant overflow-hidden hover:border-primary/50 transition-all"
+                >
+                  {src ? (
+                    <img src={src} alt={tile.title} className="w-full h-32 object-cover" />
+                  ) : (
+                    <div className="w-full h-32 flex items-center justify-center bg-surface-container-low text-label-sm text-on-surface-variant">
+                      Pas d&apos;image
+                    </div>
+                  )}
+                  <div className="p-sm">
+                    <p className="text-label-sm text-primary font-bold">Image {index + 1}</p>
+                    <p className="text-sm font-semibold">{tile.title}</p>
+                    <p className="text-label-sm text-on-surface-variant">{tile.tag}</p>
+                  </div>
+                </button>
+              );
+            })}
+          </div>
+        )}
+      </section>
+
+      <section id="services-hero" className="rounded-xl border-2 border-indigo-500/30 bg-surface p-lg shadow-sm space-y-md">
+        <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-md">
+          <div className="flex items-start gap-3">
+            <span className="text-3xl">🛠️</span>
+            <div>
+              <h2 className="text-headline-lg font-bold text-on-surface">Hero page Services</h2>
+              <p className="text-body-md text-on-surface-variant mt-sm">
+                Carrousel photo en haut de <strong>/services</strong> (6 images défilantes).
+              </p>
+              <span className={clsx("badge mt-sm", servicesPageSavedInDb ? "badge-success" : "badge-warning")}>
+                {servicesPageSavedInDb ? "Enregistré en base" : "Photos par défaut du code"}
+              </span>
+            </div>
+          </div>
+          <button type="button" onClick={() => openSectionEditor("servicesPage")} className="btn-primary gap-xs shrink-0">
+            <span className="material-symbols-outlined text-[18px]">edit</span>
+            Modifier le carrousel
+          </button>
+        </div>
+        {!loading && (
+          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-md">
+            {servicesHeroSlides.map((slide, index) => {
+              const src = slide.imageUrl ? resolveMediaUrl(slide.imageUrl) : "";
+              return (
+                <button
+                  key={slide.id}
+                  type="button"
+                  onClick={() => openSectionEditor("servicesPage")}
+                  className="text-left rounded-xl border border-outline-variant overflow-hidden hover:border-primary/50 transition-all"
+                >
+                  {src ? (
+                    <img src={src} alt={slide.title} className="w-full h-24 object-cover" />
+                  ) : (
+                    <div className="w-full h-24 flex items-center justify-center bg-surface-container-low text-label-sm">—</div>
+                  )}
+                  <div className="p-sm">
+                    <p className="text-label-sm text-primary font-bold">#{index + 1}</p>
+                    <p className="text-xs font-semibold line-clamp-2">{slide.title}</p>
+                  </div>
+                </button>
+              );
+            })}
+          </div>
+        )}
+      </section>
+
+      <section id="services-page-cards" className="rounded-xl border-2 border-teal-600/30 bg-surface p-lg shadow-sm space-y-md">
+        <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-md">
+          <div className="flex items-start gap-3">
+            <span className="text-3xl">📋</span>
+            <div>
+              <h2 className="text-headline-lg font-bold text-on-surface">Grille page Nos services</h2>
+              <p className="text-body-md text-on-surface-variant mt-sm">
+                Les <strong>8 cartes détaillées</strong> sous le hero de <strong>/services</strong> (image, badge, délai, tarif, puces, devis).
+              </p>
+              <span className={clsx("badge mt-sm", operationalSavedInDb ? "badge-success" : "badge-warning")}>
+                {operationalSavedInDb ? "Enregistré en base" : "Textes et images par défaut du code"}
+              </span>
+            </div>
+          </div>
+          <button type="button" onClick={() => openSectionEditor("operationalServices")} className="btn-primary gap-xs shrink-0">
+            <span className="material-symbols-outlined text-[18px]">edit</span>
+            Modifier les 8 cartes
+          </button>
+        </div>
+        {!loading && (
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-md">
+            {operationalCards.map((card, index) => {
+              const src = card.imageUrl ? resolveMediaUrl(card.imageUrl) : "";
+              return (
+                <button
+                  key={card.id}
+                  type="button"
+                  onClick={() => openSectionEditor("operationalServices")}
+                  className={clsx(
+                    "text-left rounded-xl border overflow-hidden hover:border-primary/50 transition-all",
+                    card.published === false ? "opacity-50 border-dashed" : "border-outline-variant"
+                  )}
+                >
+                  {src ? (
+                    <img src={src} alt={card.title} className="w-full h-28 object-cover" />
+                  ) : (
+                    <div className="w-full h-28 flex items-center justify-center bg-surface-container-low text-label-sm text-on-surface-variant">
+                      Image par défaut vitrine
+                    </div>
+                  )}
+                  <div className="p-sm space-y-1">
+                    <p className="text-label-sm text-primary font-bold">
+                      {String(index + 1).padStart(2, "0")} — {card.badge || "—"}
+                    </p>
+                    <p className="text-sm font-semibold line-clamp-2">{card.title}</p>
+                    <p className="text-label-sm text-on-surface-variant">{card.sla} · {card.priceFrom}</p>
+                  </div>
+                </button>
+              );
+            })}
+          </div>
+        )}
+      </section>
+
       <section id="services-pro" className="rounded-xl border-2 border-primary/30 bg-surface p-lg shadow-sm space-y-md">
         <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-md">
           <div className="flex items-start gap-3">
             <span className="text-3xl">💼</span>
             <div>
-              <h2 className="text-headline-lg font-bold text-on-surface">Services professionnels</h2>
+              <h2 className="text-headline-lg font-bold text-on-surface">Services professionnels (accueil)</h2>
               <p className="text-body-md text-on-surface-variant mt-sm">
-                Grille 3×2 sur l&apos;accueil (cartes 01 à 06) et page Services — dont <strong>Marketing International</strong>.
+                Grille investissement sur l&apos;accueil uniquement (6 cartes API) — ex. <strong>Marketing International</strong>. Distinct de la grille /services ci-dessus.
               </p>
             </div>
           </div>

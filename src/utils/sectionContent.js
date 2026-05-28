@@ -5,8 +5,25 @@ import {
   realisationsEditorToPayload,
   REALISATION_SLIDE_TEMPLATES,
 } from "./realisationsDefaults";
+import { mergeHeroMosaicBlock, heroEditorToPayload, HERO_MOSAIC_TILES } from "./heroMosaicDefaults";
+import {
+  mergeServicesPageHeroSlides,
+  servicesPageEditorToPayload,
+  SERVICES_PAGE_HERO_SLIDES,
+} from "./servicesPageHeroDefaults";
+import {
+  mergeOperationalServices,
+  operationalServicesEditorToPayload,
+  OPERATIONAL_SERVICE_TEMPLATES,
+} from "./operationalServicesDefaults";
 
-export { sectorsEditorToPayload, realisationsEditorToPayload };
+export {
+  sectorsEditorToPayload,
+  realisationsEditorToPayload,
+  heroEditorToPayload,
+  servicesPageEditorToPayload,
+  operationalServicesEditorToPayload,
+};
 
 const CMS_V2_KEYS = [
   "legal",
@@ -41,6 +58,7 @@ export const SECTION_PREVIEW_PATHS = {
   investment: "/investissement",
   investmentTie: "/investissement/tie",
   servicesPage: "/services",
+  operationalServices: "/services",
   legal: "/mentions-legales",
   privacy: "/confidentialite",
   terms: "/termes-conditions",
@@ -56,7 +74,7 @@ export const VITRINE_PAGE_GROUPS = [
     id: "home",
     label: "Accueil",
     path: "/",
-    sections: ["hero", "statistics", "sectors", "testimonials", "cta", "mediaSettings"],
+    sections: ["statistics", "sectors", "testimonials", "cta", "mediaSettings"],
   },
   {
     id: "about",
@@ -74,7 +92,7 @@ export const VITRINE_PAGE_GROUPS = [
     id: "services",
     label: "Services",
     path: "/services",
-    sections: ["servicesPage"],
+    sections: [],
   },
   {
     id: "global",
@@ -117,7 +135,12 @@ export const SITE_SECTION_META = {
   seo: { emoji: "🔍", label: "SEO", description: "Meta titre et description" },
   investment: { emoji: "💰", label: "Page Investissement", description: "Hero et textes /investissement" },
   investmentTie: { emoji: "📈", label: "Programme TIE", description: "Page /investissement/tie" },
-  servicesPage: { emoji: "🛠️", label: "Intro Services", description: "Hero page /services" },
+  servicesPage: { emoji: "🛠️", label: "Intro Services", description: "Hero page /services (texte + carrousel)" },
+  operationalServices: {
+    emoji: "📋",
+    label: "Grille services /services",
+    description: "8 cartes détaillées (lavage, déménagement, mécanique…) — page Nos services",
+  },
   legal: { emoji: "⚖️", label: "Mentions légales", description: "Textes /mentions-legales" },
   privacy: { emoji: "🔒", label: "Confidentialité", description: "Textes /confidentialite" },
   terms: { emoji: "📜", label: "Termes & conditions", description: "Textes /termes-conditions" },
@@ -216,17 +239,24 @@ export function getDefaultSectionContent(key) {
   switch (key) {
     case "hero":
       return {
-        badgeMain: "Entreprise TAOMAN Groupe Investissement",
-        badges: ["KYC & conformité", "Reporting PDF", "Mobile Money", "Alertes WhatsApp"],
-        title: "TAOMAN Groupe Investissement",
-        subtitle: "la plateforme qui relie capital, services et exécution terrain",
+        badgeMain: "Partenaire stratégique — TAOMAN",
+        badges: ["KYC & conformité", "Note de synthèse", "Mobile Money", "Alertes WhatsApp"],
+        title: "Excellence",
+        subtitle: "dans chaque service",
         description:
-          "TAOMAN Groupe Investissement met l'entreprise au centre : projets réels, réalisations visibles, simulation claire, dashboard investisseur et suivi transparent.",
-        btn1: "Simuler mon rendement",
+          "Taoman Group Investments offre des services professionnels de qualité supérieure et des opportunités d'investissement transparentes pour votre réussite financière.",
+        btn1: "Commencer à investir",
         btn2: "Voir nos services",
         imageCaption: "Projets suivis sur le terrain",
         heroImage: "",
         backgroundImage: "",
+        mosaic: {
+          liveLabel: "Live",
+          livePill: "Suivi temps réel",
+          kpiPercent: 96,
+          kpiLabel: "satisfaction client",
+          tiles: HERO_MOSAIC_TILES.map((t) => ({ ...t })),
+        },
       };
     case "statistics":
       return {
@@ -343,7 +373,10 @@ export function getDefaultSectionContent(key) {
           "TAOMAN Groupe Investissement combine équipes terrain, devis structurés, qualité contrôlée et suivi client pour les particuliers, entreprises et investisseurs.",
         btn1: "Demander un devis",
         btn2: "Voir l'investissement",
+        heroSlides: SERVICES_PAGE_HERO_SLIDES.map((s) => ({ ...s })),
       };
+    case "operationalServices":
+      return { items: OPERATIONAL_SERVICE_TEMPLATES.map((t) => ({ ...t })) };
     default:
       if (CMS_V2_KEYS.includes(key) && cmsV2Defaults[key]) {
         return JSON.parse(JSON.stringify(cmsV2Defaults[key]));
@@ -374,11 +407,34 @@ export function getEffectiveSectionContent(key, texts) {
         items: mergeRealisationCmsItems([]),
       };
     }
+    if (key === "hero") {
+      const d = getDefaultSectionContent("hero");
+      return normalizeHeroForEditor({ ...d, mosaic: mergeHeroMosaicBlock(d.mosaic) });
+    }
+    if (key === "servicesPage") {
+      const d = getDefaultSectionContent("servicesPage");
+      return { ...d, heroSlides: mergeServicesPageHeroSlides(d.heroSlides) };
+    }
+    if (key === "operationalServices") {
+      return { items: mergeOperationalServices([]) };
+    }
     return JSON.parse(JSON.stringify(defaults));
   }
 
   if (key === "hero") {
-    return normalizeHeroForEditor(deepMerge(getDefaultSectionContent("hero"), fromApi));
+    const merged = deepMerge(getDefaultSectionContent("hero"), fromApi);
+    merged.mosaic = mergeHeroMosaicBlock(merged.mosaic || fromApi.mosaic);
+    return normalizeHeroForEditor(merged);
+  }
+  if (key === "servicesPage") {
+    const merged = deepMerge(getDefaultSectionContent("servicesPage"), fromApi);
+    return {
+      ...merged,
+      heroSlides: mergeServicesPageHeroSlides(merged.heroSlides || fromApi.heroSlides),
+    };
+  }
+  if (key === "operationalServices") {
+    return { items: mergeOperationalServices(fromApi?.items || []) };
   }
   if (key === "statistics") {
     if (Array.isArray(fromApi) && fromApi.length) {
@@ -412,7 +468,20 @@ export function getEffectiveSectionContent(key, texts) {
 
 export function prepareContentForEditor(key, texts) {
   const effective = getEffectiveSectionContent(key, texts);
-  if (key === "hero") return normalizeHeroForEditor(effective);
+  if (key === "hero") {
+    const normalized = normalizeHeroForEditor(effective);
+    normalized.mosaic = mergeHeroMosaicBlock(normalized.mosaic || effective.mosaic);
+    return normalized;
+  }
+  if (key === "servicesPage") {
+    return {
+      ...effective,
+      heroSlides: mergeServicesPageHeroSlides(effective.heroSlides || []),
+    };
+  }
+  if (key === "operationalServices") {
+    return { items: mergeOperationalServices(effective.items || []) };
+  }
   if (key === "statistics") {
     if (Array.isArray(effective.items) && effective.items.length) {
       return normalizeStatsForEditor(effective.items);
@@ -484,16 +553,17 @@ export function normalizeHeroForEditor(content = {}) {
     badgeMain:
       content.badgeMain ||
       content.badge ||
-      "Entreprise TAOMAN Groupe Investissement",
+      "Partenaire stratégique — TAOMAN",
     badges,
-    title: content.title || content.titleFr || "",
-    subtitle: content.subtitle || content.titleEn || "",
+    title: content.title || content.titleFr || "Excellence",
+    subtitle: content.subtitle || content.titleEn || "dans chaque service",
     description: content.description || "",
     btn1: content.btn1 || content.primaryButton || "Commencer à investir",
     btn2: content.btn2 || content.secondaryButton || "Voir nos services",
     imageCaption: content.imageCaption || "Projets suivis sur le terrain",
     heroImage: content.heroImage || content.backgroundImage || "",
     backgroundImage: content.heroImage || content.backgroundImage || "",
+    mosaic: mergeHeroMosaicBlock(content.mosaic || {}),
   };
 }
 
@@ -557,6 +627,13 @@ export function getSectionPreview(key, texts) {
     case "investmentTie":
     case "servicesPage":
       return [c.title, c.badge].filter(Boolean).join(" · ");
+    case "operationalServices":
+      return (c.items || [])
+        .filter((i) => i.published !== false)
+        .slice(0, 3)
+        .map((i) => i.title || "")
+        .filter(Boolean)
+        .join(" · ");
     case "legal":
     case "privacy":
     case "terms":

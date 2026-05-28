@@ -51,7 +51,7 @@ export const DEFAULT_HOME_SERVICES = [
     description:
       "Positionnement international, acquisition clients et déploiement de marque sur les marchés régionaux et globaux.",
     actionText: "Sur devis",
-    actionLink: "Branding, Export, Croissance",
+    actionLink: "/services/marketing-international",
     published: true,
   },
 ];

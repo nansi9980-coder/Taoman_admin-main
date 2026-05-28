@@ -31,21 +31,30 @@ export default function SectionReadOnly({ sectionKey, content, savedInDb }) {
   );
 
   switch (sectionKey) {
-    case "hero":
+    case "hero": {
+      const tiles = content.mosaic?.tiles || [];
       return wrap(
         <>
           <Row label="Badge" value={content.badgeMain} />
-          <p className="text-label-sm text-on-surface-variant">{(content.badges || []).join(" · ")}</p>
           <p className="text-headline-sm font-bold text-on-surface">
             {content.title} <span className="font-normal text-on-surface-variant">{content.subtitle}</span>
           </p>
-          <p className="text-on-surface-variant whitespace-pre-wrap">{content.description}</p>
-          <Row label="Bouton 1" value={content.btn1} />
-          <Row label="Bouton 2" value={content.btn2} />
-          <Row label="Légende image" value={content.imageCaption} />
-          {content.heroImage && <Img url={content.heroImage} alt="Hero" className="max-h-32 rounded-lg object-cover" />}
+          <p className="text-on-surface-variant line-clamp-3">{content.description}</p>
+          <div className="grid grid-cols-3 gap-sm mt-sm">
+            {tiles.map((tile, i) => (
+              <div key={tile.id || i} className="rounded-lg overflow-hidden border border-outline-variant/40">
+                {tile.imageUrl ? (
+                  <Img url={tile.imageUrl} className="w-full h-24 object-cover" alt={tile.title} />
+                ) : (
+                  <div className="h-24 flex items-center justify-center bg-surface-container-low text-label-sm">Pas d&apos;image</div>
+                )}
+                <p className="text-center text-label-sm font-bold p-1">{tile.title}</p>
+              </div>
+            ))}
+          </div>
         </>
       );
+    }
 
     case "statistics": {
       const items = Array.isArray(content.items) ? content.items : [];
@@ -240,9 +249,30 @@ export default function SectionReadOnly({ sectionKey, content, savedInDb }) {
         </>
       );
 
+    case "servicesPage": {
+      const slides = content.heroSlides || [];
+      return wrap(
+        <>
+          <Row label="Badge" value={content.badge} />
+          <p className="font-bold text-lg">{content.title}</p>
+          <div className="grid grid-cols-3 gap-sm mt-sm">
+            {slides.map((slide, i) => (
+              <div key={slide.id || i} className="rounded-lg overflow-hidden border border-outline-variant/40">
+                {slide.imageUrl ? (
+                  <Img url={slide.imageUrl} className="w-full h-20 object-cover" alt={slide.title} />
+                ) : (
+                  <div className="h-20 flex items-center justify-center bg-surface-container-low text-label-sm">—</div>
+                )}
+                <p className="text-center text-label-sm p-1 line-clamp-2">{slide.title}</p>
+              </div>
+            ))}
+          </div>
+        </>
+      );
+    }
+
     case "investment":
     case "investmentTie":
-    case "servicesPage":
       return wrap(
         <>
           <Row label="Badge" value={content.badge} />
@@ -254,11 +284,6 @@ export default function SectionReadOnly({ sectionKey, content, savedInDb }) {
               <strong>{s.value || s.label}</strong> — {s.label || s.value}
             </p>
           ))}
-          {content.btn1 && (
-            <p className="text-label-sm text-primary">
-              {content.btn1} · {content.btn2}
-            </p>
-          )}
         </>
       );
 

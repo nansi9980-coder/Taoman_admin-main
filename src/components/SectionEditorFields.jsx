@@ -2,6 +2,12 @@ import MediaPicker from "./MediaPicker";
 import { resolveMediaUrl } from "../utils/api";
 import { mergeSectorCmsItems, SECTOR_TEMPLATES } from "../utils/sectorsMerge";
 import { mergeRealisationCmsItems, REALISATION_SLIDE_TEMPLATES } from "../utils/realisationsDefaults";
+import { mergeHeroMosaicBlock, HERO_MOSAIC_TILES } from "../utils/heroMosaicDefaults";
+import { mergeServicesPageHeroSlides, SERVICES_PAGE_HERO_SLIDES } from "../utils/servicesPageHeroDefaults";
+import {
+  mergeOperationalServices,
+  OPERATIONAL_SERVICE_TEMPLATES,
+} from "../utils/operationalServicesDefaults";
 
 function PreviewImage({ url, title }) {
   const src = url ? resolveMediaUrl(url) : "";
@@ -37,8 +43,20 @@ export default function SectionEditorFields({
   setContent,
 }) {
   if (sectionKey === "hero") {
+    const mosaic = mergeHeroMosaicBlock(content.mosaic || {});
+    const updateMosaicTile = (index, field, value) => {
+      const tiles = [...mosaic.tiles];
+      tiles[index] = { ...tiles[index], [field]: value };
+      setContent({ ...content, mosaic: { ...mosaic, tiles } });
+    };
+    const updateMosaicKpi = (patch) => {
+      setContent({ ...content, mosaic: { ...mosaic, ...patch } });
+    };
     return (
       <div className="space-y-md">
+        <p className="text-body-sm rounded-lg bg-primary-container/20 border border-primary/20 p-sm text-on-surface-variant">
+          <strong>Hero accueil</strong> : texte à gauche + <strong>3 images</strong> à droite (mosaïque) + encart 96 %.
+        </p>
         <div>
           <label className="block text-label-md text-on-surface-variant mb-xs">Badge principal</label>
           <input required value={content.badgeMain || ""} onChange={(e) => updateContentField({ badgeMain: e.target.value })} className="input-field" />
@@ -57,7 +75,7 @@ export default function SectionEditorFields({
         </div>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-md">
           <div>
-            <label className="block text-label-md text-on-surface-variant mb-xs">Titre ligne 1</label>
+            <label className="block text-label-md text-on-surface-variant mb-xs">Titre ligne 1 (ex. Excellence)</label>
             <input required value={content.title || ""} onChange={(e) => updateContentField({ title: e.target.value })} className="input-field" />
           </div>
           <div>
@@ -65,16 +83,37 @@ export default function SectionEditorFields({
             <input value={content.subtitle || ""} onChange={(e) => updateContentField({ subtitle: e.target.value })} className="input-field" />
           </div>
         </div>
-        <div>
-          <label className="block text-label-md text-on-surface-variant mb-xs">Description</label>
-          <textarea value={content.description || ""} onChange={(e) => updateContentField({ description: e.target.value })} rows={4} className="input-field resize-none" />
-        </div>
+        <textarea value={content.description || ""} onChange={(e) => updateContentField({ description: e.target.value })} rows={3} className="input-field resize-none" placeholder="Description" />
         <div className="grid grid-cols-1 md:grid-cols-2 gap-md">
           <input className="input-field" placeholder="Bouton 1" value={content.btn1 || ""} onChange={(e) => updateContentField({ btn1: e.target.value })} />
           <input className="input-field" placeholder="Bouton 2" value={content.btn2 || ""} onChange={(e) => updateContentField({ btn2: e.target.value })} />
         </div>
-        <input className="input-field" placeholder="Légende image" value={content.imageCaption || ""} onChange={(e) => updateContentField({ imageCaption: e.target.value })} />
-        <MediaPicker label="Image hero" value={content.heroImage || ""} onChange={(url) => updateContentField({ heroImage: url, backgroundImage: url })} />
+
+        <div className="border-t border-outline-variant pt-md space-y-sm">
+          <p className="font-bold text-primary">Encart KPI (sous la mosaïque)</p>
+          <div className="grid grid-cols-2 gap-sm">
+            <input className="input-field" placeholder="Label Live" value={mosaic.liveLabel || ""} onChange={(e) => updateMosaicKpi({ liveLabel: e.target.value })} />
+            <input className="input-field" placeholder="Sous-titre KPI" value={mosaic.livePill || ""} onChange={(e) => updateMosaicKpi({ livePill: e.target.value })} />
+            <input className="input-field" type="number" placeholder="%" value={mosaic.kpiPercent ?? 96} onChange={(e) => updateMosaicKpi({ kpiPercent: Number(e.target.value || 96) })} />
+            <input className="input-field" placeholder="Libellé KPI" value={mosaic.kpiLabel || ""} onChange={(e) => updateMosaicKpi({ kpiLabel: e.target.value })} />
+          </div>
+        </div>
+
+        <div className="border-t border-outline-variant pt-md space-y-md">
+          <p className="font-bold text-primary">Mosaïque — 3 images</p>
+          {mosaic.tiles.map((tile, index) => (
+            <div key={tile.id} className="p-md border border-outline-variant rounded-lg space-y-sm">
+              <PreviewImage url={tile.imageUrl} title={tile.title} />
+              <p className="font-bold text-label-md text-primary">
+                Image {index + 1} / 3 — {HERO_MOSAIC_TILES[index]?.title}
+              </p>
+              <input className="input-field bg-surface-container-low" readOnly value={tile.id} />
+              <input className="input-field" placeholder="Tag (ex. Services)" value={tile.tag || ""} onChange={(e) => updateMosaicTile(index, "tag", e.target.value)} />
+              <input className="input-field" placeholder="Titre sur l'image" value={tile.title || ""} onChange={(e) => updateMosaicTile(index, "title", e.target.value)} />
+              <MediaPicker label="Photo" value={tile.imageUrl || ""} onChange={(url) => updateMosaicTile(index, "imageUrl", url)} />
+            </div>
+          ))}
+        </div>
       </div>
     );
   }
@@ -282,7 +321,134 @@ export default function SectionEditorFields({
     );
   }
 
-  if (["investment", "investmentTie", "servicesPage"].includes(sectionKey)) {
+  if (sectionKey === "servicesPage") {
+    const slides = mergeServicesPageHeroSlides(content.heroSlides || []);
+    const updateSlide = (index, field, value) => {
+      const next = [...slides];
+      next[index] = { ...next[index], [field]: value };
+      setContent({ ...content, heroSlides: next });
+    };
+    return (
+      <div className="space-y-md">
+        <p className="text-body-sm rounded-lg bg-primary-container/20 border border-primary/20 p-sm text-on-surface-variant">
+          <strong>Hero page /services</strong> : texte + carrousel de photos à droite (6 slides).
+        </p>
+        <input className="input-field" placeholder="Badge" value={content.badge || ""} onChange={(e) => updateContentField({ badge: e.target.value })} />
+        <input required className="input-field" placeholder="Titre" value={content.title || ""} onChange={(e) => updateContentField({ title: e.target.value })} />
+        <textarea className="input-field resize-none" rows={3} value={content.description || ""} onChange={(e) => updateContentField({ description: e.target.value })} />
+        <input className="input-field" placeholder="Bouton 1" value={content.btn1 || ""} onChange={(e) => updateContentField({ btn1: e.target.value })} />
+        <input className="input-field" placeholder="Bouton 2" value={content.btn2 || ""} onChange={(e) => updateContentField({ btn2: e.target.value })} />
+        <div className="border-t border-outline-variant pt-md space-y-md">
+          <p className="font-bold text-primary">Carrousel hero (6 photos)</p>
+          {slides.map((slide, index) => (
+            <div key={slide.id} className="p-md border border-outline-variant rounded-lg space-y-sm">
+              <PreviewImage url={slide.imageUrl} title={slide.title} />
+              <p className="font-bold text-label-md text-primary">
+                Slide {index + 1} — {SERVICES_PAGE_HERO_SLIDES[index]?.title}
+              </p>
+              <input className="input-field bg-surface-container-low" readOnly value={slide.id} />
+              <input className="input-field" value={slide.title || ""} onChange={(e) => updateSlide(index, "title", e.target.value)} />
+              <input className="input-field" value={slide.category || ""} onChange={(e) => updateSlide(index, "category", e.target.value)} />
+              <MediaPicker label="Image" value={slide.imageUrl || ""} onChange={(url) => updateSlide(index, "imageUrl", url)} />
+            </div>
+          ))}
+        </div>
+      </div>
+    );
+  }
+
+  if (sectionKey === "operationalServices") {
+    const items = mergeOperationalServices(content.items || []);
+    const syncItems = (next) => setContent({ ...content, items: next });
+    const updateItem = (index, field, value) => {
+      const next = [...items];
+      next[index] = { ...next[index], [field]: value };
+      syncItems(next);
+    };
+    return (
+      <div className="space-y-md">
+        <p className="text-body-sm rounded-lg bg-primary-container/20 border border-primary/20 p-sm text-on-surface-variant">
+          <strong>8 cartes de la page /services</strong> (grille lavage, déménagement, bureaux…). Chaque carte a sa propre image —
+          enregistrez pour éviter les mélanges entre catégories.
+        </p>
+        {items.map((item, index) => (
+          <div key={item.id} className="p-md border border-outline-variant rounded-lg space-y-sm">
+            <PreviewImage url={item.imageUrl} title={item.title} />
+            <p className="font-bold text-primary text-label-md">
+              Carte {String(index + 1).padStart(2, "0")} / 08 — {OPERATIONAL_SERVICE_TEMPLATES[index]?.title || item.title}
+            </p>
+            <input className="input-field bg-surface-container-low" readOnly value={item.id} aria-label="Identifiant service" />
+            <input
+              className="input-field"
+              placeholder="Titre"
+              value={item.title || ""}
+              onChange={(e) => updateItem(index, "title", e.target.value)}
+            />
+            <textarea
+              className="input-field resize-none"
+              rows={3}
+              placeholder="Description"
+              value={item.description || ""}
+              onChange={(e) => updateItem(index, "description", e.target.value)}
+            />
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-sm">
+              <input
+                className="input-field"
+                placeholder="Badge (ex. Populaire)"
+                value={item.badge || ""}
+                onChange={(e) => updateItem(index, "badge", e.target.value)}
+              />
+              <input
+                className="input-field"
+                placeholder="Délai (ex. 45 – 90 min)"
+                value={item.sla || ""}
+                onChange={(e) => updateItem(index, "sla", e.target.value)}
+              />
+              <input
+                className="input-field"
+                placeholder="Tarif (ex. Dès 3 500 FCFA)"
+                value={item.priceFrom || ""}
+                onChange={(e) => updateItem(index, "priceFrom", e.target.value)}
+              />
+              <input
+                className="input-field"
+                placeholder="Lien bouton devis"
+                value={item.href || ""}
+                onChange={(e) => updateItem(index, "href", e.target.value)}
+              />
+            </div>
+            <label className="block text-label-md text-on-surface-variant">Points forts (une ligne = une puce)</label>
+            <textarea
+              className="input-field resize-none font-mono text-sm"
+              rows={4}
+              value={(item.bullets || []).join("\n")}
+              onChange={(e) =>
+                updateItem(
+                  index,
+                  "bullets",
+                  e.target.value
+                    .split("\n")
+                    .map((s) => s.trim())
+                    .filter(Boolean)
+                )
+              }
+            />
+            <MediaPicker label="Photo de la carte" value={item.imageUrl || ""} onChange={(url) => updateItem(index, "imageUrl", url)} />
+            <label className="flex items-center gap-sm text-sm">
+              <input
+                type="checkbox"
+                checked={item.published !== false}
+                onChange={(e) => updateItem(index, "published", e.target.checked)}
+              />
+              Visible sur le site
+            </label>
+          </div>
+        ))}
+      </div>
+    );
+  }
+
+  if (["investment", "investmentTie"].includes(sectionKey)) {
     return (
       <div className="space-y-md">
         <input className="input-field" placeholder="Badge" value={content.badge || ""} onChange={(e) => updateContentField({ badge: e.target.value })} />
@@ -291,12 +457,6 @@ export default function SectionEditorFields({
           <input className="input-field" placeholder="Sous-titre" value={content.subtitle || ""} onChange={(e) => updateContentField({ subtitle: e.target.value })} />
         )}
         <textarea className="input-field resize-none" rows={4} value={content.description || ""} onChange={(e) => updateContentField({ description: e.target.value })} />
-        {sectionKey === "servicesPage" && (
-          <>
-            <input className="input-field" placeholder="Bouton 1" value={content.btn1 || ""} onChange={(e) => updateContentField({ btn1: e.target.value })} />
-            <input className="input-field" placeholder="Bouton 2" value={content.btn2 || ""} onChange={(e) => updateContentField({ btn2: e.target.value })} />
-          </>
-        )}
         {(content.stats || []).map((s, i) => (
           <div key={i} className="grid grid-cols-3 gap-sm p-sm border rounded-lg">
             <input className="input-field" placeholder="Valeur" value={s.value || ""} onChange={(e) => updateNestedList("stats", i, "value", e.target.value)} />
