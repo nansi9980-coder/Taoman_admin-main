@@ -1,22 +1,12 @@
 import cmsV2Defaults from "../data/cms-v2-defaults.json";
 import { mergeSectorCmsItems, sectorsEditorToPayload, SECTOR_TEMPLATES } from "./sectorsMerge";
+import {
+  mergeRealisationCmsItems,
+  realisationsEditorToPayload,
+  REALISATION_SLIDE_TEMPLATES,
+} from "./realisationsDefaults";
 
-export { sectorsEditorToPayload };
-
-export function realisationsEditorToPayload(content = {}) {
-  const items = (content.items || []).filter(
-    (item) => item?.imageUrl?.trim() || item?.title?.trim(),
-  );
-  return {
-    footerText: content.footerText || "",
-    items: items.map((item) => ({
-      title: item.title || "",
-      category: item.category || "Terrain",
-      progress: item.progress ?? 70,
-      imageUrl: item.imageUrl || "",
-    })),
-  };
-}
+export { sectorsEditorToPayload, realisationsEditorToPayload };
 
 const CMS_V2_KEYS = [
   "legal",
@@ -66,7 +56,7 @@ export const VITRINE_PAGE_GROUPS = [
     id: "home",
     label: "Accueil",
     path: "/",
-    sections: ["hero", "statistics", "sectors", "realisations", "testimonials", "cta", "mediaSettings"],
+    sections: ["hero", "statistics", "sectors", "testimonials", "cta", "mediaSettings"],
   },
   {
     id: "about",
@@ -255,7 +245,13 @@ export function getDefaultSectionContent(key) {
       return {
         footerText:
           "TAOMAN Group Investment transforme les opérations terrain en résultats mesurables : chaque réalisation est suivie, documentée et alignée sur nos standards de qualité.",
-        items: [],
+        items: REALISATION_SLIDE_TEMPLATES.map(({ id, title, category, progress }) => ({
+          id,
+          title,
+          category,
+          progress,
+          imageUrl: "",
+        })),
       };
     case "mediaSettings":
       return {
@@ -372,6 +368,12 @@ export function getEffectiveSectionContent(key, texts) {
   const defaults = getDefaultSectionContent(key);
   if (!record) {
     if (key === "sectors") return { items: mergeSectorCmsItems([]) };
+    if (key === "realisations") {
+      return {
+        footerText: defaults.footerText || "",
+        items: mergeRealisationCmsItems([]),
+      };
+    }
     return JSON.parse(JSON.stringify(defaults));
   }
 
@@ -391,6 +393,12 @@ export function getEffectiveSectionContent(key, texts) {
   }
   if (key === "sectors") {
     return { items: mergeSectorCmsItems(fromApi?.items || []) };
+  }
+  if (key === "realisations") {
+    return {
+      footerText: fromApi.footerText || defaults.footerText || "",
+      items: mergeRealisationCmsItems(fromApi?.items || []),
+    };
   }
   const merged = deepMerge(defaults, fromApi);
   if (merged.blocks) {
@@ -415,7 +423,13 @@ export function prepareContentForEditor(key, texts) {
   if (key === "sectors") {
     return { items: mergeSectorCmsItems(effective.items || []) };
   }
-  if (["testimonials", "faq", "realisations"].includes(key)) {
+  if (key === "realisations") {
+    return {
+      footerText: effective.footerText || "",
+      items: mergeRealisationCmsItems(effective.items || []),
+    };
+  }
+  if (["testimonials", "faq"].includes(key)) {
     const items = effective.items?.length ? effective.items : getDefaultSectionContent(key).items || [{}];
     return { ...effective, items };
   }

@@ -18,6 +18,7 @@ import {
   realisationsEditorToPayload,
 } from "../utils/sectionContent";
 import { DEFAULT_HOME_SERVICES } from "../utils/homeServicesDefaults";
+import { mergeRealisationCmsItems } from "../utils/realisationsDefaults";
 
 function Modal({ open, onClose, title, children }) {
   if (!open) return null;
@@ -339,6 +340,16 @@ export default function Contenu() {
 
   const sectionLabel = (key) => SITE_SECTION_META[key]?.label || key;
 
+  const realisationsEffective = loading ? { items: [] } : getEffectiveSectionContent("realisations", texts);
+  const realisationSlides = mergeRealisationCmsItems(realisationsEffective.items || []);
+  const realisationsSavedInDb = hasSectionRecord(texts, "realisations");
+
+  const slidePreviewUrl = (slide) => {
+    if (slide.imageUrl) return buildUrl(slide.imageUrl);
+    if (slide.staticPreview && vitrineBase) return `${vitrineBase}${slide.staticPreview}`;
+    return "";
+  };
+
   return (
     <div className="space-y-lg p-lg animate-fadeIn">
       <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-md">
@@ -371,7 +382,7 @@ export default function Contenu() {
         <ul className="space-y-1 text-on-surface-variant list-disc pl-5">
           <li><strong>Notre impact</strong> (chiffres 30+, 8 secteurs…) → section <strong>Notre impact</strong> dans le groupe Accueil</li>
           <li><strong>Services professionnels</strong> (cartes 01–06) → bloc <strong>Services professionnels</strong> juste ci-dessous</li>
-          <li><strong>Réalisations terrain</strong> (carrousel accueil) → section <strong>Réalisations terrain</strong> (séparé des secteurs)</li>
+          <li><strong>Réalisations terrain</strong> (ex. Conducteur TAOMAN 01) → bloc <strong>Réalisations terrain</strong> ci-dessous</li>
           <li><strong>Nos projets</strong> (menu) = page <strong>Secteurs</strong> → mêmes images que la section <strong>Secteurs</strong></li>
           <li><strong>Vitesse du carrousel</strong> → section <strong>Vitesse défilement médias</strong></li>
           <li><strong>Photos dirigeants</strong> → page <strong>À propos</strong> → Modifier → Équipe dirigeante</li>
@@ -444,6 +455,58 @@ export default function Contenu() {
         ) : (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-md">
             {sortedServices.map((srv) => renderServiceCard(srv, { key: srv.id }))}
+          </div>
+        )}
+      </section>
+
+      <section id="realisations-terrain" className="rounded-xl border-2 border-cyan-600/30 bg-surface p-lg shadow-sm space-y-md">
+        <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-md">
+          <div className="flex items-start gap-3">
+            <span className="text-3xl">🖼️</span>
+            <div>
+              <h2 className="text-headline-lg font-bold text-on-surface">Réalisations terrain</h2>
+              <p className="text-body-md text-on-surface-variant mt-sm">
+                Carrousel « Nos projets en images » — <strong>10 slides</strong> avec aperçu photo + titre (comme les secteurs).
+              </p>
+              <span className={clsx("badge mt-sm", realisationsSavedInDb ? "badge-success" : "badge-warning")}>
+                {realisationsSavedInDb ? "Enregistré en base" : "Images vitrine par défaut — enregistrez pour personnaliser"}
+              </span>
+            </div>
+          </div>
+          <button type="button" onClick={() => openSectionEditor("realisations")} className="btn-primary gap-xs shrink-0">
+            <span className="material-symbols-outlined text-[18px]">edit</span>
+            Modifier les images
+          </button>
+        </div>
+
+        {loading ? (
+          <p className="text-on-surface-variant">Chargement…</p>
+        ) : (
+          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-md">
+            {realisationSlides.map((slide, index) => {
+              const src = slidePreviewUrl(slide);
+              return (
+                <button
+                  key={slide.id}
+                  type="button"
+                  onClick={() => openSectionEditor("realisations")}
+                  className="text-left rounded-xl border border-outline-variant overflow-hidden hover:border-primary/50 hover:shadow-md transition-all"
+                >
+                  {src ? (
+                    <img src={src} alt={slide.title} className="w-full h-28 object-cover" />
+                  ) : (
+                    <div className="w-full h-28 flex items-center justify-center bg-surface-container-low text-label-sm text-on-surface-variant">
+                      Pas d&apos;image
+                    </div>
+                  )}
+                  <div className="p-sm bg-surface-container-lowest">
+                    <p className="text-label-sm text-primary font-bold">Slide {String(index + 1).padStart(2, "0")}</p>
+                    <p className="text-sm font-semibold text-on-surface leading-tight line-clamp-2">{slide.title}</p>
+                    <p className="text-label-sm text-on-surface-variant mt-0.5">{slide.category}</p>
+                  </div>
+                </button>
+              );
+            })}
           </div>
         )}
       </section>

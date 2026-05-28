@@ -1,9 +1,11 @@
 import MediaPicker from "./MediaPicker";
 import { buildUrl } from "../utils/api";
 import { mergeSectorCmsItems, SECTOR_TEMPLATES } from "../utils/sectorsMerge";
+import { mergeRealisationCmsItems, REALISATION_SLIDE_TEMPLATES } from "../utils/realisationsDefaults";
 
-function PreviewImage({ url, title }) {
-  const src = url && (url.startsWith("http") || url.startsWith("data:") ? url : buildUrl(url));
+function PreviewImage({ url, title, staticPreviewUrl }) {
+  const cmsSrc = url && (url.startsWith("http") || url.startsWith("data:") ? url : buildUrl(url));
+  const src = cmsSrc || staticPreviewUrl || "";
   return (
     <div className="rounded-xl overflow-hidden border border-outline-variant mb-sm">
       {src ? (
@@ -14,6 +16,11 @@ function PreviewImage({ url, title }) {
         </div>
       )}
       <p className="text-center font-bold text-sm py-2 bg-surface-container-low">{title || "Sans titre"}</p>
+      {!cmsSrc && staticPreviewUrl && (
+        <p className="text-center text-label-sm text-amber-700 dark:text-amber-300 pb-2 px-2">
+          Aperçu fichier vitrine — remplacez par une image médiathèque puis Enregistrer
+        </p>
+      )}
     </div>
   );
 }
@@ -380,66 +387,84 @@ export default function SectionEditorFields({
   }
 
   if (sectionKey === "realisations") {
-    const empty = { title: "", category: "", progress: 70, imageUrl: "" };
-    const items = ensureItems(content, [empty]).items || [];
+    const vitrineBase = (import.meta.env.VITE_SITE_URL || import.meta.env.VITE_CLIENT_URL || "").replace(/\/$/, "");
+    const slides = mergeRealisationCmsItems(content.items || []);
+    const syncSlidesToForm = (nextSlides) => {
+      setContent({ ...content, items: nextSlides });
+    };
+    const updateSlide = (index, field, value) => {
+      const next = [...slides];
+      next[index] = { ...next[index], [field]: value };
+      syncSlidesToForm(next);
+    };
+    const removeSlide = (index) => {
+      const next = slides.filter((_, i) => i !== index);
+      syncSlidesToForm(next.length ? next : mergeRealisationCmsItems([]));
+    };
     return (
       <div className="space-y-md">
-        <div className="text-body-sm rounded-lg bg-primary-container/20 border border-primary/20 p-sm text-on-surface-variant space-y-2">
-          <p>
-            <strong>Carrousel « Réalisations terrain »</strong> (accueil uniquement). Tant que vous n&apos;enregistrez pas au moins une image ici,
-            le site peut afficher d&apos;anciennes photos automatiques.
-          </p>
-          <ul className="list-disc pl-5 space-y-1">
-            <li><strong>Ajouter</strong> : bouton « + Ajouter une image » en bas</li>
-            <li><strong>Changer l&apos;image</strong> : « Choisir depuis la médiathèque » ou uploader dans Médiathèque</li>
-            <li><strong>Retirer l&apos;image</strong> (garder la ligne) : bouton rouge « Retirer » sur l&apos;aperçu</li>
-            <li><strong>Supprimer la slide</strong> : « Supprimer cette slide »</li>
-            <li>Puis <strong>Enregistrer</strong> en bas de la fenêtre</li>
-          </ul>
-        </div>
+        <p className="text-body-sm rounded-lg bg-primary-container/20 border border-primary/20 p-sm text-on-surface-variant">
+          <strong>10 slides éditables</strong> (comme les secteurs). Ex. « Conducteur TAOMAN 01 » = slide 01 ci-dessous.
+          Choisissez l&apos;image dans la médiathèque, puis <strong>Enregistrer</strong>.
+        </p>
         <textarea
           className="input-field resize-none"
           rows={3}
           value={content.footerText || ""}
           onChange={(e) => updateContentField({ footerText: e.target.value })}
-          placeholder="Texte professionnel affiché sous le carrousel"
+          placeholder="Texte sous le carrousel"
         />
-        {items.map((item, index) => (
-          <div key={index} className="p-md border border-outline-variant rounded-lg space-y-sm">
-            <PreviewImage url={item.imageUrl} title={item.title || `Réalisation ${index + 1}`} />
-            <div className="flex justify-between items-center">
-              <span className="font-semibold text-label-md">Slide {index + 1}</span>
-              <button type="button" onClick={() => removeListItem(index)} className="text-error text-label-sm font-semibold">
-                Supprimer cette slide
-              </button>
+        {slides.map((item, index) => {
+          const staticPreviewUrl =
+            !item.imageUrl && item.staticPreview && vitrineBase
+              ? `${vitrineBase}${item.staticPreview}`
+              : !item.imageUrl && item.staticPreview
+                ? item.staticPreview
+                : "";
+          return (
+            <div key={item.id || index} className="p-md border border-outline-variant rounded-lg space-y-sm">
+              <PreviewImage
+                url={item.imageUrl}
+                title={item.title}
+                staticPreviewUrl={staticPreviewUrl}
+              />
+              <p className="font-bold text-primary text-label-md">
+                Slide {String(index + 1).padStart(2, "0")} — {REALISATION_SLIDE_TEMPLATES[index]?.title || item.title}
+              </p>
+              <input className="input-field bg-surface-container-low" readOnly value={item.id || ""} />
+              <input
+                className="input-field"
+                placeholder="Titre sur la photo"
+                value={item.title || ""}
+                onChange={(e) => updateSlide(index, "title", e.target.value)}
+              />
+              <input
+                className="input-field"
+                placeholder="Catégorie"
+                value={item.category || ""}
+                onChange={(e) => updateSlide(index, "category", e.target.value)}
+              />
+              <input
+                className="input-field"
+                type="number"
+                min={0}
+                max={100}
+                value={item.progress ?? 70}
+                onChange={(e) => updateSlide(index, "progress", Number(e.target.value || 70))}
+              />
+              <MediaPicker
+                label="Image (médiathèque)"
+                value={item.imageUrl || ""}
+                onChange={(url) => updateSlide(index, "imageUrl", url)}
+              />
+              {index >= REALISATION_SLIDE_TEMPLATES.length && (
+                <button type="button" onClick={() => removeSlide(index)} className="text-error text-label-sm">
+                  Supprimer cette slide extra
+                </button>
+              )}
             </div>
-            <input
-              className="input-field"
-              placeholder="Titre affiché sur la photo (ex. Équipe de transport 02)"
-              value={item.title || ""}
-              onChange={(e) => updateListItem(index, "title", e.target.value)}
-            />
-            <input
-              className="input-field"
-              placeholder="Catégorie (ex. TRANSPORT, BTP, AGRO)"
-              value={item.category || ""}
-              onChange={(e) => updateListItem(index, "category", e.target.value)}
-            />
-            <input
-              className="input-field"
-              type="number"
-              min={0}
-              max={100}
-              placeholder="Progression %"
-              value={item.progress ?? 70}
-              onChange={(e) => updateListItem(index, "progress", Number(e.target.value || 70))}
-            />
-            <MediaPicker label="Image du carrousel" value={item.imageUrl || ""} onChange={(url) => updateListItem(index, "imageUrl", url)} />
-          </div>
-        ))}
-        <button type="button" onClick={() => addListItem(empty)} className="btn-primary text-label-sm gap-xs">
-          + Ajouter une image au carrousel
-        </button>
+          );
+        })}
       </div>
     );
   }

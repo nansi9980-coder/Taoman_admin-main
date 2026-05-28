@@ -146,11 +146,17 @@ export default function SectionReadOnly({ sectionKey, content, savedInDb }) {
           >
             {(content.items || []).map((item, i) => {
               const label = item.title || item.name || `Élément ${i + 1}`;
-              const hasImage = Boolean(item.imageUrl);
+              const vitrineBase = (import.meta.env.VITE_SITE_URL || import.meta.env.VITE_CLIENT_URL || "").replace(/\/$/, "");
+              const staticUrl =
+                sectionKey === "realisations" && !item.imageUrl && item.staticPreview && vitrineBase
+                  ? `${vitrineBase}${item.staticPreview}`
+                  : "";
+              const previewUrl = item.imageUrl || staticUrl;
+              const hasImage = Boolean(previewUrl);
               return (
-                <div key={item.slug || item.title || i} className="rounded-xl border border-outline-variant/40 overflow-hidden bg-surface-container-lowest">
+                <div key={item.slug || item.id || item.title || i} className="rounded-xl border border-outline-variant/40 overflow-hidden bg-surface-container-lowest">
                   {hasImage ? (
-                    <Img url={item.imageUrl} className="w-full h-32 object-cover" alt={label} />
+                    <Img url={previewUrl} className="w-full h-32 object-cover" alt={label} />
                   ) : (
                     <div className="w-full h-32 flex items-center justify-center bg-surface-container-low text-on-surface-variant text-label-sm">
                       Pas d&apos;image
@@ -159,6 +165,9 @@ export default function SectionReadOnly({ sectionKey, content, savedInDb }) {
                   <div className="p-sm text-center">
                     {sectionKey === "sectors" && (
                       <p className="text-label-sm text-primary font-bold mb-0.5">Secteur {String(i + 1).padStart(2, "0")}</p>
+                    )}
+                    {sectionKey === "realisations" && (
+                      <p className="text-label-sm text-primary font-bold mb-0.5">Slide {String(i + 1).padStart(2, "0")}</p>
                     )}
                     <p className="font-bold text-on-surface text-sm leading-tight">{label}</p>
                     {item.category && <p className="text-label-sm text-primary mt-0.5">{item.category}</p>}
