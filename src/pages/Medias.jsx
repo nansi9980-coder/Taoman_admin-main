@@ -65,7 +65,8 @@ export default function Medias() {
         <div>
           <h1 className="text-display text-on-surface dark:text-[#e4e4ef] font-bold">Médiathèque</h1>
           <p className="text-body-md text-on-surface-variant dark:text-[#8e90a2] mt-sm">
-            Gérez vos documents, images et fichiers partagés.
+            Stockage partagé : choisissez la catégorie à l&apos;upload. <strong>Général</strong> = bibliothèque pour les secteurs et services.
+            <strong> Réalisations (vitrine)</strong> = carrousel accueil si la section CMS « Réalisations terrain » est vide.
           </p>
         </div>
         

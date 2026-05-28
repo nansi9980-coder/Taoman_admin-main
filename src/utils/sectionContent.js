@@ -98,8 +98,8 @@ export const SITE_SECTION_META = {
   hero: { emoji: "🏠", label: "Bandeau Hero", description: "Titre, badges et boutons (accueil)" },
   about: { emoji: "🏢", label: "Page À propos", description: "Mission, équipe dirigeante, parcours" },
   statistics: { emoji: "📊", label: "Notre impact", description: "Chiffres clés de la section impact" },
-  sectors: { emoji: "🏗️", label: "Secteurs", description: "Cartes secteurs d'investissement" },
-  realisations: { emoji: "🖼️", label: "Réalisations terrain", description: "Images, titres et texte pro sous la galerie" },
+  sectors: { emoji: "🏗️", label: "Secteurs", description: "Cartes secteurs (accueil + page Nos projets /secteurs) — indépendant du carrousel" },
+  realisations: { emoji: "🖼️", label: "Réalisations terrain", description: "Carrousel accueil uniquement — ou médiathèque catégorie « Réalisations »" },
   mediaSettings: { emoji: "⚙️", label: "Vitesse défilement médias", description: "Autoplay et options de défilement" },
   testimonials: { emoji: "💬", label: "Témoignages", description: "Avis clients" },
   cta: { emoji: "📣", label: "Bannière CTA", description: "Appel à l'action accueil" },
@@ -232,10 +232,12 @@ export function getDefaultSectionContent(key) {
     case "sectors":
       return {
         items: [
-          { title: "BTP & Immobilier", description: "Projets de construction durable", imageUrl: "" },
-          { title: "Agro & Énergie", description: "Agriculture moderne et énergies renouvelables", imageUrl: "" },
-          { title: "Transport & Logistique", description: "Solutions logistiques intégrées", imageUrl: "" },
-          { title: "Marketing International", description: "Visibilité de marque, acquisition internationale et croissance export", imageUrl: "" },
+          { slug: "logistique-transports", title: "Logistique & Transports", description: "Flottes, déménagement, distribution", imageUrl: "" },
+          { slug: "agro-business", title: "Agro Business", description: "Production et transformation agricole", imageUrl: "" },
+          { slug: "commerce-general", title: "Commerce général", description: "Import, distribution et négoce", imageUrl: "" },
+          { slug: "btp-immobilier", title: "BTP & Immobilier", description: "Construction et immobilier", imageUrl: "" },
+          { slug: "numerique-services", title: "Numérique & Services", description: "Digital et services aux entreprises", imageUrl: "" },
+          { slug: "marketing-international", title: "Marketing International", description: "Visibilité et croissance export", imageUrl: "" },
         ],
       };
     case "realisations":

@@ -351,7 +351,7 @@ export default function SectionEditorFields({
           ? { name: "", role: "", comment: "" }
           : sectionKey === "realisations"
             ? { title: "", category: "", progress: 70, imageUrl: "" }
-            : { title: "", description: "", imageUrl: "" };
+            : { slug: "", title: "", description: "", imageUrl: "" };
     return (
       <div className="space-y-md">
         {sectionKey === "realisations" && (
@@ -399,12 +399,26 @@ export default function SectionEditorFields({
               </>
             ) : (
               <>
+                {sectionKey === "sectors" && (
+                  <input
+                    className="input-field"
+                    placeholder="Identifiant (slug), ex. logistique-transports"
+                    value={item.slug || ""}
+                    onChange={(e) => updateListItem(index, "slug", e.target.value)}
+                  />
+                )}
                 <input className="input-field" value={item.title || ""} onChange={(e) => updateListItem(index, "title", e.target.value)} />
                 <textarea className="input-field resize-none" rows={2} value={item.description || ""} onChange={(e) => updateListItem(index, "description", e.target.value)} />
                 <MediaPicker label="Image" value={item.imageUrl || ""} onChange={(url) => updateListItem(index, "imageUrl", url)} />
                 {sectionKey === "sectors" && (
                   <p className="text-label-sm text-on-surface-variant">
-                    Recommandé : image nette 1400x1000 px minimum, ratio paysage.
+                    Secteurs = accueil et page <strong>Nos projets</strong>. Ne modifie pas le carrousel « Réalisations terrain » (section séparée).
+                    Image recommandée : 1400×1000 px, paysage.
+                  </p>
+                )}
+                {sectionKey === "realisations" && (
+                  <p className="text-label-sm text-on-surface-variant">
+                    Carrousel de l&apos;accueil uniquement. Les images « Général » de la médiathèque n&apos;y apparaissent plus automatiquement.
                   </p>
                 )}
               </>

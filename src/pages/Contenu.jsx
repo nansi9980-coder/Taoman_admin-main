@@ -277,7 +277,8 @@ export default function Contenu() {
         <ul className="space-y-1 text-on-surface-variant list-disc pl-5">
           <li><strong>Notre impact</strong> (chiffres 30+, 8 secteurs…) → section <strong>Notre impact</strong> dans le groupe Accueil</li>
           <li><strong>Services professionnels</strong> (cartes 01, 02…) → bloc <strong>Cartes de services</strong> en bas de page (avec image visible)</li>
-          <li><strong>Réalisations terrain</strong> (carrousel + titres) → section <strong>Réalisations terrain</strong> dans Accueil</li>
+          <li><strong>Réalisations terrain</strong> (carrousel accueil) → section <strong>Réalisations terrain</strong> (séparé des secteurs)</li>
+          <li><strong>Nos projets</strong> (menu) = page <strong>Secteurs</strong> → mêmes images que la section <strong>Secteurs</strong></li>
           <li><strong>Vitesse du carrousel</strong> → section <strong>Vitesse défilement médias</strong></li>
           <li><strong>Photos dirigeants</strong> → page <strong>À propos</strong> → Modifier → Équipe dirigeante</li>
         </ul>
