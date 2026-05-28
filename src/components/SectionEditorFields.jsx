@@ -1,4 +1,21 @@
 import MediaPicker from "./MediaPicker";
+import { buildUrl } from "../utils/api";
+
+function PreviewImage({ url, title }) {
+  const src = url && (url.startsWith("http") || url.startsWith("data:") ? url : buildUrl(url));
+  return (
+    <div className="rounded-xl overflow-hidden border border-outline-variant mb-sm">
+      {src ? (
+        <img src={src} alt={title || "Aperçu"} className="w-full h-36 object-cover object-center" />
+      ) : (
+        <div className="w-full h-36 flex items-center justify-center bg-surface-container-low text-on-surface-variant text-label-sm">
+          Aucune image — choisissez-en une ci-dessous
+        </div>
+      )}
+      <p className="text-center font-bold text-sm py-2 bg-surface-container-low">{title || "Sans titre"}</p>
+    </div>
+  );
+}
 
 function ensureItems(content, fallback = [{}]) {
   if (Array.isArray(content?.items) && content.items.length > 0) return content;
@@ -348,6 +365,14 @@ export default function SectionEditorFields({
         )}
         {(ensureItems(content, [empty]).items || []).map((item, index) => (
           <div key={index} className="p-md border border-outline-variant rounded-lg space-y-sm">
+            <PreviewImage
+              url={item.imageUrl}
+              title={
+                sectionKey === "realisations"
+                  ? item.title || `Réalisation ${index + 1}`
+                  : item.title || item.name || `Élément ${index + 1}`
+              }
+            />
             <div className="flex justify-between">
               <span className="font-semibold text-label-md">Élément {index + 1}</span>
               {(content.items?.length || 0) > 1 && (

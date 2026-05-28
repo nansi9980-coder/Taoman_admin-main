@@ -135,25 +135,36 @@ export default function SectionReadOnly({ sectionKey, content, savedInDb }) {
       return wrap(
         <div className="space-y-md">
           {sectionKey === "realisations" && content.footerText && (
-            <p className="text-body-sm text-on-surface-variant">{content.footerText}</p>
+            <p className="text-body-sm text-on-surface-variant italic border-l-4 border-primary pl-3">{content.footerText}</p>
           )}
-          {(content.items || []).map((item, i) => (
-            <div key={i} className="flex gap-md p-sm border border-outline-variant/30 rounded-lg">
-              {item.imageUrl && <Img url={item.imageUrl} />}
-              <div>
-                <p className="font-bold">{item.title || item.name}</p>
-                {item.category && <p className="text-label-sm text-primary">{item.category}</p>}
-                {item.role && <p className="text-label-sm text-primary">{item.role}</p>}
-                <p className="text-on-surface-variant whitespace-pre-wrap">
-                  {item.description || item.comment || item.answer}
-                </p>
-                {sectionKey === "realisations" && item.progress !== undefined && (
-                  <p className="text-label-sm text-on-surface-variant mt-xs">Progression: {item.progress}%</p>
-                )}
-                {item.question && <p className="font-semibold mt-xs">{item.question}</p>}
-              </div>
-            </div>
-          ))}
+          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-md">
+            {(content.items || []).map((item, i) => {
+              const label = item.title || item.name || `Élément ${i + 1}`;
+              const hasImage = Boolean(item.imageUrl);
+              return (
+                <div key={i} className="rounded-xl border border-outline-variant/40 overflow-hidden bg-surface-container-lowest">
+                  {hasImage ? (
+                    <Img url={item.imageUrl} className="w-full h-32 object-cover" alt={label} />
+                  ) : (
+                    <div className="w-full h-32 flex items-center justify-center bg-surface-container-low text-on-surface-variant text-label-sm">
+                      Pas d&apos;image
+                    </div>
+                  )}
+                  <div className="p-sm text-center">
+                    <p className="font-bold text-on-surface text-sm leading-tight">{label}</p>
+                    {item.category && <p className="text-label-sm text-primary mt-0.5">{item.category}</p>}
+                    {item.role && <p className="text-label-sm text-primary mt-0.5">{item.role}</p>}
+                    {sectionKey === "realisations" && item.progress !== undefined && (
+                      <p className="text-label-sm text-on-surface-variant mt-1">{item.progress}%</p>
+                    )}
+                    {(item.description || item.comment) && (
+                      <p className="text-label-sm text-on-surface-variant mt-1 line-clamp-2">{item.description || item.comment}</p>
+                    )}
+                  </div>
+                </div>
+              );
+            })}
+          </div>
         </div>
       );
 

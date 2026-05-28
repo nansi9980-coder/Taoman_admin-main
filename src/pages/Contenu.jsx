@@ -272,6 +272,17 @@ export default function Contenu() {
         </div>
       )}
 
+      <div className="rounded-xl border border-primary/25 bg-primary-container/10 p-md text-body-sm text-on-surface">
+        <p className="font-bold text-primary mb-sm">Où modifier les blocs de la page d&apos;accueil</p>
+        <ul className="space-y-1 text-on-surface-variant list-disc pl-5">
+          <li><strong>Notre impact</strong> (chiffres 30+, 8 secteurs…) → section <strong>Notre impact</strong> dans le groupe Accueil</li>
+          <li><strong>Services professionnels</strong> (cartes 01, 02…) → bloc <strong>Cartes de services</strong> en bas de page (avec image visible)</li>
+          <li><strong>Réalisations terrain</strong> (carrousel + titres) → section <strong>Réalisations terrain</strong> dans Accueil</li>
+          <li><strong>Vitesse du carrousel</strong> → section <strong>Vitesse défilement médias</strong></li>
+          <li><strong>Photos dirigeants</strong> → page <strong>À propos</strong> → Modifier → Équipe dirigeante</li>
+        </ul>
+      </div>
+
       {saveMessage && (
         <div className="rounded-lg border border-green-500/30 bg-green-50 dark:bg-green-900/20 p-md text-green-800 dark:text-green-200 flex flex-wrap items-center gap-md">
           <span>{saveMessage}</span>
@@ -353,27 +364,33 @@ export default function Contenu() {
         {services.length === 0 ? (
           <p className="text-on-surface-variant py-lg text-center border border-dashed rounded-xl">Aucun service — les cartes par défaut s&apos;affichent sur la vitrine.</p>
         ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-md">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-md">
             {services.map((srv) => (
               <div
                 key={srv.id}
                 onClick={() => openEditService(srv)}
-                className="card hover:border-primary/50 cursor-pointer relative group"
+                className="card hover:border-primary/50 cursor-pointer relative group overflow-hidden p-0"
               >
-                <div className="flex justify-between items-start mb-sm">
+                <div className="relative">
                   {srv.imageUrl ? (
-                    <img src={buildUrl(srv.imageUrl)} alt={srv.title} className="w-16 h-16 object-cover rounded-lg" />
+                    <img
+                      src={buildUrl(srv.imageUrl)}
+                      alt={srv.title}
+                      className="w-full h-40 object-cover object-center"
+                    />
                   ) : (
-                    <span className="material-symbols-outlined text-[32px] text-primary bg-primary-container/20 p-sm rounded-lg">
-                      {srv.icon || "category"}
-                    </span>
+                    <div className="w-full h-40 flex items-center justify-center bg-surface-container-low text-primary">
+                      <span className="material-symbols-outlined text-[48px]">{srv.icon || "category"}</span>
+                    </div>
                   )}
-                  <span className={clsx("badge", srv.published ? "badge-success" : "badge-warning")}>
+                  <span className={clsx("badge absolute top-2 right-2", srv.published ? "badge-success" : "badge-warning")}>
                     {srv.published ? "Publié" : "Brouillon"}
                   </span>
                 </div>
-                <h3 className="font-semibold text-on-surface mb-xs">{srv.title}</h3>
-                <p className="text-body-sm text-on-surface-variant line-clamp-3">{srv.description}</p>
+                <div className="p-md pt-sm">
+                  <h3 className="font-bold text-on-surface text-center mb-xs">{srv.title}</h3>
+                  <p className="text-body-sm text-on-surface-variant line-clamp-2 text-center">{srv.description}</p>
+                </div>
                 <div className="absolute top-2 right-2 flex gap-xs opacity-0 group-hover:opacity-100">
                   <button type="button" onClick={(e) => handleTogglePublish(srv.id, srv.published, e)} className="p-xs bg-surface shadow-sm rounded text-primary">
                     <span className="material-symbols-outlined text-[18px]">{srv.published ? "visibility_off" : "visibility"}</span>
@@ -427,6 +444,12 @@ export default function Contenu() {
       {modalOpen && modalType === "service" && (
         <Modal open onClose={() => setModalOpen(false)} title={editingItem ? "Modifier le service" : "Nouveau service"}>
           <form onSubmit={handleServiceSubmit} className="space-y-md pb-lg">
+            {serviceForm.imageUrl && (
+              <div className="rounded-xl overflow-hidden border border-outline-variant">
+                <img src={buildUrl(serviceForm.imageUrl)} alt={serviceForm.title} className="w-full h-48 object-cover object-center" />
+                <p className="text-center font-bold py-2 bg-surface-container-low">{serviceForm.title || "Sans titre"}</p>
+              </div>
+            )}
             <input required className="input-field" placeholder="Titre *" value={serviceForm.title} onChange={(e) => setServiceForm({ ...serviceForm, title: e.target.value })} />
             <input className="input-field" placeholder="Icône Material" value={serviceForm.icon} onChange={(e) => setServiceForm({ ...serviceForm, icon: e.target.value })} />
             <textarea required className="input-field resize-none" rows={4} placeholder="Description *" value={serviceForm.description} onChange={(e) => setServiceForm({ ...serviceForm, description: e.target.value })} />
