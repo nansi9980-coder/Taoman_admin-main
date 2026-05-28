@@ -1,5 +1,6 @@
 import MediaPicker from "./MediaPicker";
 import { buildUrl } from "../utils/api";
+import { mergeSectorCmsItems, SECTOR_TEMPLATES } from "../utils/sectorsMerge";
 
 function PreviewImage({ url, title }) {
   const src = url && (url.startsWith("http") || url.startsWith("data:") ? url : buildUrl(url));
@@ -343,35 +344,118 @@ export default function SectionEditorFields({
     );
   }
 
-  if (["testimonials", "sectors", "faq", "realisations"].includes(sectionKey)) {
+  if (sectionKey === "sectors") {
+    const sectorItems = mergeSectorCmsItems(content.items || []);
+    return (
+      <div className="space-y-md">
+        <p className="text-body-sm rounded-lg bg-primary-container/20 border border-primary/20 p-sm text-on-surface-variant">
+          <strong>6 secteurs fixes</strong> (accueil + Nos projets). Chaque image est rattachée au secteur indiqué — plus de mélange
+          Logistique / BTP. Cliquez <strong>Enregistrer</strong> une fois pour réécrire les 6 cartes en base avec les bons identifiants.
+        </p>
+        {sectorItems.map((item, index) => (
+          <div key={item.slug} className="p-md border border-outline-variant rounded-lg space-y-sm">
+            <PreviewImage url={item.imageUrl} title={item.title} />
+            <p className="font-bold text-primary text-label-md">
+              Secteur {String(index + 1).padStart(2, "0")} / 06 — {SECTOR_TEMPLATES[index]?.title || item.title}
+            </p>
+            <input className="input-field bg-surface-container-low" readOnly value={item.slug} aria-label="Identifiant secteur" />
+            <input
+              className="input-field"
+              placeholder="Titre affiché"
+              value={item.title || ""}
+              onChange={(e) => updateListItem(index, "title", e.target.value)}
+            />
+            <textarea
+              className="input-field resize-none"
+              rows={2}
+              value={item.description || ""}
+              onChange={(e) => updateListItem(index, "description", e.target.value)}
+            />
+            <MediaPicker label="Image du secteur" value={item.imageUrl || ""} onChange={(url) => updateListItem(index, "imageUrl", url)} />
+            <p className="text-label-sm text-on-surface-variant">Image recommandée : 1400×1000 px, paysage.</p>
+          </div>
+        ))}
+      </div>
+    );
+  }
+
+  if (sectionKey === "realisations") {
+    const empty = { title: "", category: "", progress: 70, imageUrl: "" };
+    const items = ensureItems(content, [empty]).items || [];
+    return (
+      <div className="space-y-md">
+        <div className="text-body-sm rounded-lg bg-primary-container/20 border border-primary/20 p-sm text-on-surface-variant space-y-2">
+          <p>
+            <strong>Carrousel « Réalisations terrain »</strong> (accueil uniquement). Tant que vous n&apos;enregistrez pas au moins une image ici,
+            le site peut afficher d&apos;anciennes photos automatiques.
+          </p>
+          <ul className="list-disc pl-5 space-y-1">
+            <li><strong>Ajouter</strong> : bouton « + Ajouter une image » en bas</li>
+            <li><strong>Changer l&apos;image</strong> : « Choisir depuis la médiathèque » ou uploader dans Médiathèque</li>
+            <li><strong>Retirer l&apos;image</strong> (garder la ligne) : bouton rouge « Retirer » sur l&apos;aperçu</li>
+            <li><strong>Supprimer la slide</strong> : « Supprimer cette slide »</li>
+            <li>Puis <strong>Enregistrer</strong> en bas de la fenêtre</li>
+          </ul>
+        </div>
+        <textarea
+          className="input-field resize-none"
+          rows={3}
+          value={content.footerText || ""}
+          onChange={(e) => updateContentField({ footerText: e.target.value })}
+          placeholder="Texte professionnel affiché sous le carrousel"
+        />
+        {items.map((item, index) => (
+          <div key={index} className="p-md border border-outline-variant rounded-lg space-y-sm">
+            <PreviewImage url={item.imageUrl} title={item.title || `Réalisation ${index + 1}`} />
+            <div className="flex justify-between items-center">
+              <span className="font-semibold text-label-md">Slide {index + 1}</span>
+              <button type="button" onClick={() => removeListItem(index)} className="text-error text-label-sm font-semibold">
+                Supprimer cette slide
+              </button>
+            </div>
+            <input
+              className="input-field"
+              placeholder="Titre affiché sur la photo (ex. Équipe de transport 02)"
+              value={item.title || ""}
+              onChange={(e) => updateListItem(index, "title", e.target.value)}
+            />
+            <input
+              className="input-field"
+              placeholder="Catégorie (ex. TRANSPORT, BTP, AGRO)"
+              value={item.category || ""}
+              onChange={(e) => updateListItem(index, "category", e.target.value)}
+            />
+            <input
+              className="input-field"
+              type="number"
+              min={0}
+              max={100}
+              placeholder="Progression %"
+              value={item.progress ?? 70}
+              onChange={(e) => updateListItem(index, "progress", Number(e.target.value || 70))}
+            />
+            <MediaPicker label="Image du carrousel" value={item.imageUrl || ""} onChange={(url) => updateListItem(index, "imageUrl", url)} />
+          </div>
+        ))}
+        <button type="button" onClick={() => addListItem(empty)} className="btn-primary text-label-sm gap-xs">
+          + Ajouter une image au carrousel
+        </button>
+      </div>
+    );
+  }
+
+  if (["testimonials", "faq"].includes(sectionKey)) {
     const empty =
       sectionKey === "faq"
         ? { question: "", answer: "" }
-        : sectionKey === "testimonials"
-          ? { name: "", role: "", comment: "" }
-          : sectionKey === "realisations"
-            ? { title: "", category: "", progress: 70, imageUrl: "" }
-            : { slug: "", title: "", description: "", imageUrl: "" };
+        : { name: "", role: "", comment: "" };
     return (
       <div className="space-y-md">
-        {sectionKey === "realisations" && (
-          <textarea
-            className="input-field resize-none"
-            rows={3}
-            value={content.footerText || ""}
-            onChange={(e) => updateContentField({ footerText: e.target.value })}
-            placeholder="Texte professionnel affiché sous la section Réalisations terrain"
-          />
-        )}
         {(ensureItems(content, [empty]).items || []).map((item, index) => (
           <div key={index} className="p-md border border-outline-variant rounded-lg space-y-sm">
             <PreviewImage
               url={item.imageUrl}
-              title={
-                sectionKey === "realisations"
-                  ? item.title || `Réalisation ${index + 1}`
-                  : item.title || item.name || `Élément ${index + 1}`
-              }
+              title={item.title || item.name || `Élément ${index + 1}`}
             />
             <div className="flex justify-between">
               <span className="font-semibold text-label-md">Élément {index + 1}</span>
@@ -390,37 +474,11 @@ export default function SectionEditorFields({
                 <input className="input-field" value={item.role || ""} onChange={(e) => updateListItem(index, "role", e.target.value)} />
                 <textarea className="input-field resize-none" rows={3} value={item.comment || ""} onChange={(e) => updateListItem(index, "comment", e.target.value)} />
               </>
-            ) : sectionKey === "realisations" ? (
-              <>
-                <input className="input-field" placeholder="Titre de l'image" value={item.title || ""} onChange={(e) => updateListItem(index, "title", e.target.value)} />
-                <input className="input-field" placeholder="Catégorie" value={item.category || ""} onChange={(e) => updateListItem(index, "category", e.target.value)} />
-                <input className="input-field" type="number" min={0} max={100} placeholder="Progression %" value={item.progress ?? 70} onChange={(e) => updateListItem(index, "progress", Number(e.target.value || 70))} />
-                <MediaPicker label="Image réalisation" value={item.imageUrl || ""} onChange={(url) => updateListItem(index, "imageUrl", url)} />
-              </>
             ) : (
               <>
-                {sectionKey === "sectors" && (
-                  <input
-                    className="input-field"
-                    placeholder="Identifiant (slug), ex. logistique-transports"
-                    value={item.slug || ""}
-                    onChange={(e) => updateListItem(index, "slug", e.target.value)}
-                  />
-                )}
                 <input className="input-field" value={item.title || ""} onChange={(e) => updateListItem(index, "title", e.target.value)} />
                 <textarea className="input-field resize-none" rows={2} value={item.description || ""} onChange={(e) => updateListItem(index, "description", e.target.value)} />
                 <MediaPicker label="Image" value={item.imageUrl || ""} onChange={(url) => updateListItem(index, "imageUrl", url)} />
-                {sectionKey === "sectors" && (
-                  <p className="text-label-sm text-on-surface-variant">
-                    Secteurs = accueil et page <strong>Nos projets</strong>. Ne modifie pas le carrousel « Réalisations terrain » (section séparée).
-                    Image recommandée : 1400×1000 px, paysage.
-                  </p>
-                )}
-                {sectionKey === "realisations" && (
-                  <p className="text-label-sm text-on-surface-variant">
-                    Carrousel de l&apos;accueil uniquement. Les images « Général » de la médiathèque n&apos;y apparaissent plus automatiquement.
-                  </p>
-                )}
               </>
             )}
           </div>

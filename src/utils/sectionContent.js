@@ -1,4 +1,22 @@
 import cmsV2Defaults from "../data/cms-v2-defaults.json";
+import { mergeSectorCmsItems, sectorsEditorToPayload, SECTOR_TEMPLATES } from "./sectorsMerge";
+
+export { sectorsEditorToPayload };
+
+export function realisationsEditorToPayload(content = {}) {
+  const items = (content.items || []).filter(
+    (item) => item?.imageUrl?.trim() || item?.title?.trim(),
+  );
+  return {
+    footerText: content.footerText || "",
+    items: items.map((item) => ({
+      title: item.title || "",
+      category: item.category || "Terrain",
+      progress: item.progress ?? 70,
+      imageUrl: item.imageUrl || "",
+    })),
+  };
+}
 
 const CMS_V2_KEYS = [
   "legal",
@@ -231,14 +249,7 @@ export function getDefaultSectionContent(key) {
       };
     case "sectors":
       return {
-        items: [
-          { slug: "logistique-transports", title: "Logistique & Transports", description: "Flottes, déménagement, distribution", imageUrl: "" },
-          { slug: "agro-business", title: "Agro Business", description: "Production et transformation agricole", imageUrl: "" },
-          { slug: "commerce-general", title: "Commerce général", description: "Import, distribution et négoce", imageUrl: "" },
-          { slug: "btp-immobilier", title: "BTP & Immobilier", description: "Construction et immobilier", imageUrl: "" },
-          { slug: "numerique-services", title: "Numérique & Services", description: "Digital et services aux entreprises", imageUrl: "" },
-          { slug: "marketing-international", title: "Marketing International", description: "Visibilité et croissance export", imageUrl: "" },
-        ],
+        items: SECTOR_TEMPLATES.map((t) => ({ ...t, imageUrl: "" })),
       };
     case "realisations":
       return {
@@ -359,7 +370,10 @@ export function getEffectiveSectionContent(key, texts) {
   const record = findSectionRecord(texts, key);
   const fromApi = parseSectionContent(record?.content);
   const defaults = getDefaultSectionContent(key);
-  if (!record) return JSON.parse(JSON.stringify(defaults));
+  if (!record) {
+    if (key === "sectors") return { items: mergeSectorCmsItems([]) };
+    return JSON.parse(JSON.stringify(defaults));
+  }
 
   if (key === "hero") {
     return normalizeHeroForEditor(deepMerge(getDefaultSectionContent("hero"), fromApi));
@@ -374,6 +388,9 @@ export function getEffectiveSectionContent(key, texts) {
   }
   if (key === "about") {
     return deepMerge(ABOUT_DEFAULTS, fromApi);
+  }
+  if (key === "sectors") {
+    return { items: mergeSectorCmsItems(fromApi?.items || []) };
   }
   const merged = deepMerge(defaults, fromApi);
   if (merged.blocks) {
@@ -395,7 +412,10 @@ export function prepareContentForEditor(key, texts) {
     return normalizeStatsForEditor(effective);
   }
   if (key === "about") return normalizeAboutForEditor(effective);
-  if (["sectors", "testimonials", "faq", "realisations"].includes(key)) {
+  if (key === "sectors") {
+    return { items: mergeSectorCmsItems(effective.items || []) };
+  }
+  if (["testimonials", "faq", "realisations"].includes(key)) {
     const items = effective.items?.length ? effective.items : getDefaultSectionContent(key).items || [{}];
     return { ...effective, items };
   }

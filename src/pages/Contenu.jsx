@@ -14,7 +14,10 @@ import {
   getEffectiveSectionContent,
   statsEditorToPayload,
   aboutEditorToPayload,
+  sectorsEditorToPayload,
+  realisationsEditorToPayload,
 } from "../utils/sectionContent";
+import { DEFAULT_HOME_SERVICES } from "../utils/homeServicesDefaults";
 
 function Modal({ open, onClose, title, children }) {
   if (!open) return null;
@@ -38,6 +41,7 @@ export default function Contenu() {
   const [services, setServices] = useState([]);
   const [texts, setTexts] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [seedingServices, setSeedingServices] = useState(false);
   const [loadError, setLoadError] = useState("");
   const [saveMessage, setSaveMessage] = useState("");
   const [savePreviewUrl, setSavePreviewUrl] = useState("");
@@ -96,6 +100,8 @@ export default function Contenu() {
     let payload = textForm.content;
     if (textForm.section === "statistics") payload = statsEditorToPayload(textForm.content);
     if (textForm.section === "about") payload = aboutEditorToPayload(textForm.content);
+    if (textForm.section === "sectors") payload = sectorsEditorToPayload(textForm.content);
+    if (textForm.section === "realisations") payload = realisationsEditorToPayload(textForm.content);
     try {
       await apiFetch("/content/texts", {
         method: "POST",
@@ -243,6 +249,94 @@ export default function Contenu() {
     }
   };
 
+  const sortedServices = [...services].sort((a, b) =>
+    String(a.icon || "99").localeCompare(String(b.icon || "99"), undefined, { numeric: true }),
+  );
+  const hasMarketingService = services.some((s) => /marketing/i.test(s.title || ""));
+
+  const seedDefaultServices = async () => {
+    if (!window.confirm("Créer les 6 cartes Services professionnels (01 à 06, dont Marketing International) ?")) return;
+    setSeedingServices(true);
+    try {
+      for (const svc of [...DEFAULT_HOME_SERVICES].reverse()) {
+        await apiFetch("/content", { method: "POST", body: svc, token });
+      }
+      setSaveMessage("Les 6 services sont en base — visibles sur l'accueil après publication.");
+      loadData();
+    } catch (err) {
+      alert(err.message);
+    } finally {
+      setSeedingServices(false);
+    }
+  };
+
+  const addMarketingService = async () => {
+    const marketing = DEFAULT_HOME_SERVICES.find((s) => /marketing/i.test(s.title));
+    if (!marketing) return;
+    setSeedingServices(true);
+    try {
+      await apiFetch("/content", { method: "POST", body: marketing, token });
+      setSaveMessage("Marketing International ajouté.");
+      loadData();
+    } catch (err) {
+      alert(err.message);
+    } finally {
+      setSeedingServices(false);
+    }
+  };
+
+  const renderServiceCard = (srv, { preview = false, key }) => (
+    <div
+      key={key}
+      onClick={preview ? undefined : () => openEditService(srv)}
+      className={clsx(
+        "card relative group overflow-hidden p-0",
+        preview ? "border-dashed opacity-90" : "hover:border-primary/50 cursor-pointer",
+      )}
+    >
+      <div className="relative">
+        {srv.imageUrl ? (
+          <img src={buildUrl(srv.imageUrl)} alt={srv.title} className="w-full h-40 object-cover object-center" />
+        ) : (
+          <div className="w-full h-40 flex flex-col items-center justify-center bg-surface-container-low text-primary gap-1">
+            <span className="text-3xl font-black">{srv.icon || "—"}</span>
+            {!srv.imageUrl && <span className="text-label-sm text-on-surface-variant">Pas d&apos;image</span>}
+          </div>
+        )}
+        <span
+          className={clsx(
+            "badge absolute top-2 left-2",
+            preview ? "badge-warning" : srv.published ? "badge-success" : "badge-warning",
+          )}
+        >
+          {preview ? "Aperçu vitrine" : srv.published ? "Publié" : "Brouillon"}
+        </span>
+      </div>
+      <div className="p-md pt-sm">
+        <p className="text-label-sm text-primary font-bold text-center mb-0.5">{srv.icon ? `Carte ${srv.icon}` : ""}</p>
+        <h3 className="font-bold text-on-surface text-center mb-xs">{srv.title}</h3>
+        <p className="text-body-sm text-on-surface-variant line-clamp-2 text-center">{srv.description}</p>
+        {srv.actionText && (
+          <p className="text-label-sm text-primary text-center mt-2 font-semibold">{srv.actionText}</p>
+        )}
+      </div>
+      {!preview && srv.id && (
+        <div className="absolute top-2 right-2 flex gap-xs opacity-0 group-hover:opacity-100">
+          <button
+            type="button"
+            onClick={(e) => handleTogglePublish(srv.id, srv.published, e)}
+            className="p-xs bg-surface shadow-sm rounded text-primary"
+          >
+            <span className="material-symbols-outlined text-[18px]">{srv.published ? "visibility_off" : "visibility"}</span>
+          </button>
+          <button type="button" onClick={(e) => handleDeleteService(srv.id, e)} className="p-xs bg-surface shadow-sm rounded text-error">
+            <span className="material-symbols-outlined text-[18px]">delete</span>
+          </button>
+        </div>
+      )}
+    </div>
+  );
+
   const sectionLabel = (key) => SITE_SECTION_META[key]?.label || key;
 
   return (
@@ -276,7 +370,7 @@ export default function Contenu() {
         <p className="font-bold text-primary mb-sm">Où modifier les blocs de la page d&apos;accueil</p>
         <ul className="space-y-1 text-on-surface-variant list-disc pl-5">
           <li><strong>Notre impact</strong> (chiffres 30+, 8 secteurs…) → section <strong>Notre impact</strong> dans le groupe Accueil</li>
-          <li><strong>Services professionnels</strong> (cartes 01, 02…) → bloc <strong>Cartes de services</strong> en bas de page (avec image visible)</li>
+          <li><strong>Services professionnels</strong> (cartes 01–06) → bloc <strong>Services professionnels</strong> juste ci-dessous</li>
           <li><strong>Réalisations terrain</strong> (carrousel accueil) → section <strong>Réalisations terrain</strong> (séparé des secteurs)</li>
           <li><strong>Nos projets</strong> (menu) = page <strong>Secteurs</strong> → mêmes images que la section <strong>Secteurs</strong></li>
           <li><strong>Vitesse du carrousel</strong> → section <strong>Vitesse défilement médias</strong></li>
@@ -294,6 +388,65 @@ export default function Contenu() {
           )}
         </div>
       )}
+
+      <section id="services-pro" className="rounded-xl border-2 border-primary/30 bg-surface p-lg shadow-sm space-y-md">
+        <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-md">
+          <div className="flex items-start gap-3">
+            <span className="text-3xl">💼</span>
+            <div>
+              <h2 className="text-headline-lg font-bold text-on-surface">Services professionnels</h2>
+              <p className="text-body-md text-on-surface-variant mt-sm">
+                Grille 3×2 sur l&apos;accueil (cartes 01 à 06) et page Services — dont <strong>Marketing International</strong>.
+              </p>
+            </div>
+          </div>
+          <div className="flex flex-wrap gap-sm">
+            {services.length === 0 && (
+              <button
+                type="button"
+                onClick={seedDefaultServices}
+                disabled={seedingServices || loading}
+                className="btn-secondary gap-xs"
+              >
+                <span className="material-symbols-outlined text-[18px]">playlist_add</span>
+                Créer les 6 services
+              </button>
+            )}
+            {services.length > 0 && !hasMarketingService && (
+              <button
+                type="button"
+                onClick={addMarketingService}
+                disabled={seedingServices || loading}
+                className="btn-secondary gap-xs"
+              >
+                + Marketing International
+              </button>
+            )}
+            <button type="button" onClick={openNewService} className="btn-primary gap-xs">
+              <span className="material-symbols-outlined text-[18px]">add</span>
+              Nouveau service
+            </button>
+          </div>
+        </div>
+
+        {loading ? (
+          <p className="text-on-surface-variant">Chargement des services…</p>
+        ) : services.length === 0 ? (
+          <>
+            <p className="text-body-sm text-on-surface-variant rounded-lg bg-amber-500/10 border border-amber-500/30 p-sm">
+              Aucun service en base : la vitrine affiche les <strong>6 cartes par défaut</strong> ci-dessous. Cliquez
+              &laquo;&nbsp;Créer les 6 services&nbsp;&raquo; pour les gérer depuis le dash (images, textes, publication).
+            </p>
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-md">
+              {DEFAULT_HOME_SERVICES.map((srv) => renderServiceCard(srv, { preview: true, key: srv.icon }))}
+            </div>
+          </>
+        ) : (
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-md">
+            {sortedServices.map((srv) => renderServiceCard(srv, { key: srv.id }))}
+          </div>
+        )}
+      </section>
 
       {loading ? (
         <div className="rounded-lg border border-primary/20 bg-primary-container/10 p-md text-primary">Chargement du contenu…</div>
@@ -349,62 +502,6 @@ export default function Contenu() {
           </section>
         ))
       )}
-
-      <div className="mt-xl pt-xl border-t border-outline-variant">
-        <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-md mb-md">
-          <div>
-            <h2 className="text-headline-lg font-bold text-on-surface">Cartes de services</h2>
-            <p className="text-body-md text-on-surface-variant mt-sm">Affichées sur l&apos;accueil et la page Services</p>
-          </div>
-          <button type="button" onClick={openNewService} className="btn-primary gap-xs w-fit">
-            <span className="material-symbols-outlined text-[18px]">add</span>
-            Nouveau service
-          </button>
-        </div>
-
-        {services.length === 0 ? (
-          <p className="text-on-surface-variant py-lg text-center border border-dashed rounded-xl">Aucun service — les cartes par défaut s&apos;affichent sur la vitrine.</p>
-        ) : (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-md">
-            {services.map((srv) => (
-              <div
-                key={srv.id}
-                onClick={() => openEditService(srv)}
-                className="card hover:border-primary/50 cursor-pointer relative group overflow-hidden p-0"
-              >
-                <div className="relative">
-                  {srv.imageUrl ? (
-                    <img
-                      src={buildUrl(srv.imageUrl)}
-                      alt={srv.title}
-                      className="w-full h-40 object-cover object-center"
-                    />
-                  ) : (
-                    <div className="w-full h-40 flex items-center justify-center bg-surface-container-low text-primary">
-                      <span className="material-symbols-outlined text-[48px]">{srv.icon || "category"}</span>
-                    </div>
-                  )}
-                  <span className={clsx("badge absolute top-2 right-2", srv.published ? "badge-success" : "badge-warning")}>
-                    {srv.published ? "Publié" : "Brouillon"}
-                  </span>
-                </div>
-                <div className="p-md pt-sm">
-                  <h3 className="font-bold text-on-surface text-center mb-xs">{srv.title}</h3>
-                  <p className="text-body-sm text-on-surface-variant line-clamp-2 text-center">{srv.description}</p>
-                </div>
-                <div className="absolute top-2 right-2 flex gap-xs opacity-0 group-hover:opacity-100">
-                  <button type="button" onClick={(e) => handleTogglePublish(srv.id, srv.published, e)} className="p-xs bg-surface shadow-sm rounded text-primary">
-                    <span className="material-symbols-outlined text-[18px]">{srv.published ? "visibility_off" : "visibility"}</span>
-                  </button>
-                  <button type="button" onClick={(e) => handleDeleteService(srv.id, e)} className="p-xs bg-surface shadow-sm rounded text-error">
-                    <span className="material-symbols-outlined text-[18px]">delete</span>
-                  </button>
-                </div>
-              </div>
-            ))}
-          </div>
-        )}
-      </div>
 
       {modalOpen && modalType === "section" && selectedSection && (
         <Modal open onClose={() => setModalOpen(false)} title={`Modifier — ${sectionLabel(selectedSection)}`}>

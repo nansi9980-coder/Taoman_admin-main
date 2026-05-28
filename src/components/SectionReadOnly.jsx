@@ -137,12 +137,18 @@ export default function SectionReadOnly({ sectionKey, content, savedInDb }) {
           {sectionKey === "realisations" && content.footerText && (
             <p className="text-body-sm text-on-surface-variant italic border-l-4 border-primary pl-3">{content.footerText}</p>
           )}
-          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-md">
+          <div
+            className={
+              sectionKey === "sectors"
+                ? "grid grid-cols-2 sm:grid-cols-3 gap-md"
+                : "grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-md"
+            }
+          >
             {(content.items || []).map((item, i) => {
               const label = item.title || item.name || `Élément ${i + 1}`;
               const hasImage = Boolean(item.imageUrl);
               return (
-                <div key={i} className="rounded-xl border border-outline-variant/40 overflow-hidden bg-surface-container-lowest">
+                <div key={item.slug || item.title || i} className="rounded-xl border border-outline-variant/40 overflow-hidden bg-surface-container-lowest">
                   {hasImage ? (
                     <Img url={item.imageUrl} className="w-full h-32 object-cover" alt={label} />
                   ) : (
@@ -151,6 +157,9 @@ export default function SectionReadOnly({ sectionKey, content, savedInDb }) {
                     </div>
                   )}
                   <div className="p-sm text-center">
+                    {sectionKey === "sectors" && (
+                      <p className="text-label-sm text-primary font-bold mb-0.5">Secteur {String(i + 1).padStart(2, "0")}</p>
+                    )}
                     <p className="font-bold text-on-surface text-sm leading-tight">{label}</p>
                     {item.category && <p className="text-label-sm text-primary mt-0.5">{item.category}</p>}
                     {item.role && <p className="text-label-sm text-primary mt-0.5">{item.role}</p>}
