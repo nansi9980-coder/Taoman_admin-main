@@ -56,9 +56,7 @@ export function ThemeProvider({ children }) {
 
   useEffect(() => {
     if (!activePalette) return;
-    if (resolvedTheme === "light") {
-      applyThemePalette(activePalette);
-    }
+    applyThemePalette(activePalette);
   }, [activePalette, resolvedTheme]);
 
   const setTheme = (newMode) => {

@@ -132,6 +132,9 @@ export default function Contenu() {
         token,
       });
       setSaveMessage("Section enregistrée avec succès.");
+      if (typeof window !== "undefined") {
+        window.dispatchEvent(new CustomEvent("taoman-cms-updated"));
+      }
       setSavePreviewUrl(
         vitrineBase ? `${vitrineBase}${SECTION_PREVIEW_PATHS[textForm.section] || "/"}` : ""
       );
@@ -223,7 +226,7 @@ export default function Contenu() {
 
   const openEditService = (srv) => {
     setModalType("service");
-    setEditingItem(srv);
+    setEditingItem(srv?.id ? srv : null);
     setServiceForm({
       title: srv.title || "",
       description: srv.description || "",
@@ -311,10 +314,10 @@ export default function Contenu() {
   const renderServiceCard = (srv, { preview = false, key }) => (
     <div
       key={key}
-      onClick={preview ? undefined : () => openEditService(srv)}
+      onClick={() => openEditService(srv)}
       className={clsx(
-        "card relative group overflow-hidden p-0",
-        preview ? "border-dashed opacity-90" : "hover:border-primary/50 cursor-pointer",
+        "card relative group overflow-hidden p-0 cursor-pointer",
+        preview ? "border-dashed opacity-90 hover:border-primary/40" : "hover:border-primary/50",
       )}
     >
       <div className="relative">

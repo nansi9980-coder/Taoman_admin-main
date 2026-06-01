@@ -462,8 +462,18 @@ export default function SectionEditorFields({
             <input className="input-field" placeholder="Valeur" value={s.value || ""} onChange={(e) => updateNestedList("stats", i, "value", e.target.value)} />
             <input className="input-field" placeholder="Label" value={s.label || ""} onChange={(e) => updateNestedList("stats", i, "label", e.target.value)} />
             <input className="input-field" placeholder="Icon" value={s.icon || ""} onChange={(e) => updateNestedList("stats", i, "icon", e.target.value)} />
+            <button type="button" className="btn-secondary text-error sm:col-span-3" onClick={() => removeNestedList("stats", i)}>
+              Supprimer cette stat
+            </button>
           </div>
         ))}
+        <button
+          type="button"
+          className="btn-secondary"
+          onClick={() => addNestedList("stats", { value: "", label: "", icon: "" })}
+        >
+          + Ajouter une statistique
+        </button>
       </div>
     );
   }
@@ -492,6 +502,11 @@ export default function SectionEditorFields({
         <input className="input-field" value={content.email || ""} onChange={(e) => updateContentField({ email: e.target.value })} placeholder="Email" />
         <input className="input-field" value={content.address || ""} onChange={(e) => updateContentField({ address: e.target.value })} placeholder="Adresse" />
         <input className="input-field" value={content.hours || ""} onChange={(e) => updateContentField({ hours: e.target.value })} placeholder="Horaires" />
+        <div className="grid grid-cols-2 gap-sm">
+          <input className="input-field" value={content.lat ?? ""} onChange={(e) => updateContentField({ lat: e.target.value })} placeholder="Latitude" />
+          <input className="input-field" value={content.lng ?? ""} onChange={(e) => updateContentField({ lng: e.target.value })} placeholder="Longitude" />
+        </div>
+        <input className="input-field" value={content.coordinatesLabel || ""} onChange={(e) => updateContentField({ coordinatesLabel: e.target.value })} placeholder={'6°13\'07.1"N 1°12\'19.0"E'} />
       </div>
     );
   }

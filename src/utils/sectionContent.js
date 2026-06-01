@@ -329,8 +329,11 @@ export function getDefaultSectionContent(key) {
       return {
         phone: "+228 90 42 13 77",
         email: "contact@taoman.com",
-        address: "Lomé, Togo",
+        address: "Vakpossito, Lomé — Togo",
         hours: "Lun - Dim : 08h00 - 20h00",
+        lat: "6.2186389",
+        lng: "1.2052778",
+        coordinatesLabel: '6°13\'07.1"N 1°12\'19.0"E',
       };
     case "seo":
       return {

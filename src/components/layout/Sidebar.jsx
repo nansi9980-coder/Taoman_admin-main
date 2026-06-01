@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { NavLink, useNavigate } from "react-router-dom";
 import { useAuth } from "../../context/AuthContext";
-import { apiFetch, buildUrl } from "../../utils/api";
+import { apiFetch, resolveMediaUrl } from "../../utils/api";
 import { parseSectionContent } from "../../utils/sectionContent";
 import clsx from "clsx";
 
@@ -53,15 +53,25 @@ export default function Sidebar({ collapsed, onToggle }) {
   const navigate = useNavigate();
   const [logoUrl, setLogoUrl] = useState("/logo.png");
 
-  useEffect(() => {
+  const loadLogo = () => {
     if (!token) return;
     apiFetch("/content/texts", { token })
       .then((texts) => {
         const brand = Array.isArray(texts) ? texts.find((t) => t.section === "branding") : null;
         const c = parseSectionContent(brand?.content);
-        if (c.logoUrl) setLogoUrl(buildUrl(c.logoUrl));
+        setLogoUrl(c.logoUrl ? resolveMediaUrl(c.logoUrl) : "/logo.png");
       })
-      .catch(() => {});
+      .catch(() => setLogoUrl("/logo.png"));
+  };
+
+  useEffect(() => {
+    loadLogo();
+  }, [token]);
+
+  useEffect(() => {
+    const onCms = () => loadLogo();
+    window.addEventListener("taoman-cms-updated", onCms);
+    return () => window.removeEventListener("taoman-cms-updated", onCms);
   }, [token]);
 
   const handleLogout = () => {

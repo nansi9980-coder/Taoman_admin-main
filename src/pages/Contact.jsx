@@ -5,7 +5,22 @@ import { useAuth } from "../context/AuthContext";
 import { apiFetch, API_BASE } from "../utils/api";
 import { parseSectionContent, findSectionRecord } from "../utils/sectionContent";
 
-const emptySiteContact = { phone: "", email: "", address: "", hours: "" };
+const DEFAULT_MAP = {
+  lat: "6.2186389",
+  lng: "1.2052778",
+  coordinatesLabel: '6°13\'07.1"N 1°12\'19.0"E',
+  address: "Vakpossito, Lomé — Togo",
+};
+
+const emptySiteContact = {
+  phone: "",
+  email: "",
+  address: DEFAULT_MAP.address,
+  hours: "",
+  lat: DEFAULT_MAP.lat,
+  lng: DEFAULT_MAP.lng,
+  coordinatesLabel: DEFAULT_MAP.coordinatesLabel,
+};
 
 export default function Contact() {
   const { token } = useAuth();
@@ -17,6 +32,7 @@ export default function Contact() {
   const [siteContactOpen, setSiteContactOpen] = useState(true);
   const [siteSaving, setSiteSaving] = useState(false);
   const [siteSaveMsg, setSiteSaveMsg] = useState("");
+  const [siteSaveError, setSiteSaveError] = useState("");
 
   const fetchContacts = useCallback(async () => {
     if (!token) return;
@@ -56,18 +72,32 @@ export default function Contact() {
 
   const saveSiteContact = async (e) => {
     e.preventDefault();
+    if (!token) {
+      alert("Session expirée : reconnectez-vous pour enregistrer les coordonnées.");
+      return;
+    }
     setSiteSaving(true);
     setSiteSaveMsg("");
+    setSiteSaveError("");
     try {
       await apiFetch("/content/texts", {
         method: "POST",
         body: { section: "contact", content: siteContact },
         token,
       });
-      setSiteSaveMsg("Coordonnées enregistrées — visibles sur la page Contact du site.");
-      setTimeout(() => setSiteSaveMsg(""), 5000);
+      if (typeof window !== "undefined") {
+        window.dispatchEvent(new CustomEvent("taoman-cms-updated"));
+      }
+      setSiteSaveMsg("Coordonnées enregistrées — page Contact, footer et carte mises à jour sur la vitrine.");
+      setTimeout(() => setSiteSaveMsg(""), 6000);
     } catch (err) {
-      alert(err.message);
+      const msg = err.message || "Erreur lors de l'enregistrement";
+      setSiteSaveError(msg);
+      if (err.status === 401) {
+        alert("Session expirée : reconnectez-vous (menu déconnexion puis login), puis réessayez.");
+      } else {
+        alert(msg);
+      }
     } finally {
       setSiteSaving(false);
     }
@@ -143,6 +173,14 @@ export default function Contact() {
             {siteSaveMsg && (
               <p className="text-label-sm text-secondary font-medium">{siteSaveMsg}</p>
             )}
+            {siteSaveError && (
+              <p className="text-label-sm text-red-600 dark:text-red-400 font-medium">{siteSaveError}</p>
+            )}
+            {!token && (
+              <p className="text-label-sm text-amber-700 dark:text-amber-300">
+                Connectez-vous pour enregistrer les coordonnées (erreur 401 si session expirée).
+              </p>
+            )}
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-md">
               <div>
                 <label className="block text-label-sm text-on-surface-variant mb-xs">Téléphone</label>
@@ -181,8 +219,35 @@ export default function Contact() {
                   placeholder="Lun - Dim : 08h00 - 20h00"
                 />
               </div>
+              <div>
+                <label className="block text-label-sm text-on-surface-variant mb-xs">Latitude (carte)</label>
+                <input
+                  className="input-field"
+                  value={siteContact.lat ?? ""}
+                  onChange={(e) => setSiteContact((s) => ({ ...s, lat: e.target.value }))}
+                  placeholder="6.2186389"
+                />
+              </div>
+              <div>
+                <label className="block text-label-sm text-on-surface-variant mb-xs">Longitude (carte)</label>
+                <input
+                  className="input-field"
+                  value={siteContact.lng ?? ""}
+                  onChange={(e) => setSiteContact((s) => ({ ...s, lng: e.target.value }))}
+                  placeholder="1.2052778"
+                />
+              </div>
+              <div className="sm:col-span-2">
+                <label className="block text-label-sm text-on-surface-variant mb-xs">Coordonnées affichées</label>
+                <input
+                  className="input-field"
+                  value={siteContact.coordinatesLabel ?? ""}
+                  onChange={(e) => setSiteContact((s) => ({ ...s, coordinatesLabel: e.target.value }))}
+                  placeholder={'6°13\'07.1"N 1°12\'19.0"E'}
+                />
+              </div>
             </div>
-            <button type="submit" disabled={siteSaving} className="btn-primary gap-xs w-fit">
+            <button type="submit" disabled={siteSaving || !token} className="btn-primary gap-xs w-fit disabled:opacity-50">
               <span className="material-symbols-outlined text-[18px]">save</span>
               {siteSaving ? "Enregistrement…" : "Enregistrer les coordonnées"}
             </button>

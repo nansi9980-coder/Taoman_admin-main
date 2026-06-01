@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { useTheme } from "../context/ThemeContext";
 import { useAuth } from "../context/AuthContext";
-import { apiFetch, buildUrl } from "../utils/api";
+import { apiFetch, buildUrl, resolveMediaUrl } from "../utils/api";
 import MediaPicker from "../components/MediaPicker";
 import { parseSectionContent } from "../utils/sectionContent";
 import { textOnBackground } from "../utils/applyThemePalette";
@@ -34,19 +34,53 @@ const DEFAULT_SIMULATOR = {
   ],
 };
 
+async function themeRequest(path, options = {}) {
+  const res = await fetch(buildUrl(path), options);
+  if (!res.ok) {
+    let message = res.statusText || "Erreur serveur";
+    try {
+      const data = await res.json();
+      message = data?.message || data?.error || message;
+    } catch {
+      /* ignore */
+    }
+    throw new Error(message);
+  }
+  const text = await res.text();
+  if (!text) return null;
+  try {
+    return JSON.parse(text);
+  } catch {
+    return null;
+  }
+}
+
 export default function Parametres() {
   const { activePalette, fetchActiveTheme } = useTheme();
   const { token } = useAuth();
   const [themes, setThemes] = useState([]);
+  const [themesError, setThemesError] = useState("");
+  const [themeBusy, setThemeBusy] = useState(false);
   const [simulator, setSimulator] = useState(DEFAULT_SIMULATOR);
   const [branding, setBranding] = useState({ logoUrl: "" });
   const [saveMsg, setSaveMsg] = useState("");
+  const [saveError, setSaveError] = useState("");
+  const [savingBranding, setSavingBranding] = useState(false);
+  const [savingSimulator, setSavingSimulator] = useState(false);
+
+  const loadThemes = async () => {
+    setThemesError("");
+    try {
+      const list = await themeRequest("/theme");
+      setThemes(Array.isArray(list) ? list : []);
+    } catch (e) {
+      setThemes([]);
+      setThemesError(e.message || "Impossible de charger les palettes.");
+    }
+  };
 
   useEffect(() => {
-    fetch(buildUrl("/theme"))
-      .then((res) => res.json())
-      .then(setThemes)
-      .catch(console.error);
+    loadThemes();
   }, []);
 
   useEffect(() => {
@@ -70,46 +104,67 @@ export default function Parametres() {
       .catch(console.error);
   }, [token]);
 
-  const handleSetTheme = async (id) => {
-    try {
-      await fetch(buildUrl(`/theme/active/${id}`), { method: "PUT" });
-      await fetchActiveTheme();
-      setSaveMsg("Palette appliquée sur l'admin et la vitrine.");
-      setTimeout(() => setSaveMsg(""), 4000);
-    } catch (e) {
-      console.error(e);
+  const notifyCmsUpdated = () => {
+    if (typeof window !== "undefined") {
+      window.dispatchEvent(new CustomEvent("taoman-cms-updated"));
     }
   };
 
-  const reloadThemes = async () => {
-    const res = await fetch(buildUrl("/theme"));
-    setThemes(await res.json());
-    await fetchActiveTheme();
+  const handleSetTheme = async (id) => {
+    setThemeBusy(true);
+    setSaveError("");
+    try {
+      await themeRequest(`/theme/active/${id}`, { method: "PUT" });
+      await fetchActiveTheme();
+      await loadThemes();
+      setSaveMsg("Palette appliquée sur l'admin et la vitrine.");
+      setTimeout(() => setSaveMsg(""), 4000);
+    } catch (e) {
+      setSaveError(e.message || "Impossible d'appliquer cette palette.");
+    } finally {
+      setThemeBusy(false);
+    }
   };
 
   const handleInitThemes = async () => {
+    setThemeBusy(true);
+    setSaveError("");
     try {
-      await fetch(buildUrl("/theme/init"), { method: "POST" });
-      await reloadThemes();
+      await themeRequest("/theme/init", { method: "POST" });
+      await fetchActiveTheme();
+      await loadThemes();
       setSaveMsg("Palettes initialisées.");
       setTimeout(() => setSaveMsg(""), 4000);
     } catch (e) {
-      console.error(e);
+      setSaveError(e.message || "Échec de l'initialisation des palettes.");
+    } finally {
+      setThemeBusy(false);
     }
   };
 
   const handleSeedPresets = async () => {
+    setThemeBusy(true);
+    setSaveError("");
     try {
-      await fetch(buildUrl("/theme/seed-presets"), { method: "POST" });
-      await reloadThemes();
+      await themeRequest("/theme/seed-presets", { method: "POST" });
+      await fetchActiveTheme();
+      await loadThemes();
       setSaveMsg("Nouvelles palettes ajoutées ou mises à jour.");
       setTimeout(() => setSaveMsg(""), 4000);
     } catch (e) {
-      console.error(e);
+      setSaveError(e.message || "Échec de l'ajout des palettes.");
+    } finally {
+      setThemeBusy(false);
     }
   };
 
   const saveSimulator = async () => {
+    if (!token) {
+      setSaveError("Session expirée. Reconnectez-vous.");
+      return;
+    }
+    setSavingSimulator(true);
+    setSaveError("");
     try {
       await apiFetch("/content/texts", {
         method: "POST",
@@ -117,28 +172,59 @@ export default function Parametres() {
         token,
       });
       setSaveMsg("Paramètres simulateur enregistrés (page /investissement/simulateur).");
-      if (typeof window !== "undefined") {
-        window.dispatchEvent(new CustomEvent("taoman-cms-updated"));
-      }
+      notifyCmsUpdated();
       setTimeout(() => setSaveMsg(""), 4000);
     } catch (e) {
-      alert(e.message);
+      setSaveError(e.message);
+    } finally {
+      setSavingSimulator(false);
     }
   };
 
   const saveBranding = async () => {
+    if (!token) {
+      setSaveError("Session expirée. Reconnectez-vous.");
+      return;
+    }
+    setSavingBranding(true);
+    setSaveError("");
     try {
       await apiFetch("/content/texts", {
         method: "POST",
         body: { section: "branding", content: branding },
         token,
       });
-      setSaveMsg("Logo enregistré (vitrine + admin après refresh).");
+      setSaveMsg("Logo enregistré (vitrine et barre latérale mises à jour).");
+      notifyCmsUpdated();
       setTimeout(() => setSaveMsg(""), 4000);
     } catch (e) {
-      alert(e.message);
+      setSaveError(e.message);
+    } finally {
+      setSavingBranding(false);
     }
   };
+
+  const updateFeature = (idx, field, value) => {
+    const features = [...(simulator.features || [])];
+    features[idx] = { ...features[idx], [field]: value };
+    setSimulator((s) => ({ ...s, features }));
+  };
+
+  const addFeature = () => {
+    setSimulator((s) => ({
+      ...s,
+      features: [...(s.features || []), { icon: "✨", title: "", desc: "" }],
+    }));
+  };
+
+  const removeFeature = (idx) => {
+    setSimulator((s) => ({
+      ...s,
+      features: (s.features || []).filter((_, i) => i !== idx),
+    }));
+  };
+
+  const logoPreview = branding.logoUrl ? resolveMediaUrl(branding.logoUrl) : "/logo.png";
 
   return (
     <div className="space-y-lg animate-fadeIn p-lg">
@@ -152,6 +238,11 @@ export default function Parametres() {
           {saveMsg}
         </div>
       )}
+      {saveError && (
+        <div className="rounded-lg border border-red-500/30 bg-red-50 dark:bg-red-900/20 p-md text-red-800 dark:text-red-200">
+          {saveError}
+        </div>
+      )}
 
       <div className="card max-w-3xl">
         <h3 className="font-headline-md text-headline-md mb-md">Logo du site</h3>
@@ -160,7 +251,7 @@ export default function Parametres() {
         </p>
         <div className="flex items-center gap-md mb-md">
           <img
-            src={branding.logoUrl ? buildUrl(branding.logoUrl) : "/logo.png"}
+            src={logoPreview}
             alt="Logo"
             className="w-16 h-16 object-contain rounded-lg border border-outline-variant bg-white p-1"
             onError={(e) => { e.target.src = "/logo.png"; }}
@@ -172,24 +263,42 @@ export default function Parametres() {
           value={branding.logoUrl || ""}
           onChange={(url) => setBranding({ logoUrl: url })}
         />
-        <button type="button" onClick={saveBranding} className="btn-primary mt-md">
-          Enregistrer le logo
+        <button
+          type="button"
+          onClick={saveBranding}
+          disabled={savingBranding || !token}
+          className="btn-primary mt-md disabled:opacity-50"
+        >
+          {savingBranding ? "Enregistrement…" : "Enregistrer le logo"}
         </button>
       </div>
 
       <div className="card max-w-3xl">
         <h3 className="font-headline-md text-headline-md mb-md">Palettes de couleurs</h3>
         <p className="text-body-md text-on-surface-variant mb-md">
-          Modifie l'apparence de l'admin et du site vitrine. Les textes s'adaptent automatiquement pour rester lisibles.
+          Modifie l'apparence de l'admin et du site vitrine (mode clair et sombre). Les textes s'adaptent pour rester lisibles.
         </p>
+        {themesError && (
+          <p className="text-body-sm text-red-600 dark:text-red-400 mb-md">{themesError}</p>
+        )}
         <div className="flex flex-wrap gap-sm mb-lg">
           {themes.length === 0 && (
-            <button type="button" onClick={handleInitThemes} className="btn-primary">
-              Initialiser les palettes
+            <button
+              type="button"
+              onClick={handleInitThemes}
+              disabled={themeBusy}
+              className="btn-primary disabled:opacity-50"
+            >
+              {themeBusy ? "Traitement…" : "Initialiser les palettes"}
             </button>
           )}
-          <button type="button" onClick={handleSeedPresets} className="btn-secondary">
-            Ajouter les palettes recommandées
+          <button
+            type="button"
+            onClick={handleSeedPresets}
+            disabled={themeBusy}
+            className="btn-secondary disabled:opacity-50"
+          >
+            {themeBusy ? "Traitement…" : "Ajouter les palettes recommandées"}
           </button>
         </div>
 
@@ -197,22 +306,24 @@ export default function Parametres() {
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-md">
             {themes.map((t) => {
               const textColor = textOnBackground(t.surface);
+              const isActive = activePalette?.id === t.id;
               return (
                 <div
                   key={t.id}
                   role="button"
                   tabIndex={0}
-                  onClick={() => handleSetTheme(t.id)}
-                  onKeyDown={(e) => e.key === "Enter" && handleSetTheme(t.id)}
+                  aria-pressed={isActive}
+                  onClick={() => !themeBusy && handleSetTheme(t.id)}
+                  onKeyDown={(e) => e.key === "Enter" && !themeBusy && handleSetTheme(t.id)}
                   className={`rounded-xl border-2 cursor-pointer transition-all overflow-hidden ${
-                    activePalette?.id === t.id
+                    isActive
                       ? "border-primary ring-2 ring-primary/30"
                       : "border-outline-variant hover:border-primary/50"
-                  }`}
+                  } ${themeBusy ? "opacity-60 pointer-events-none" : ""}`}
                 >
                   <div className="flex justify-between items-center p-md pb-sm bg-surface">
                     <h4 className="font-semibold text-on-surface">{t.name}</h4>
-                    {activePalette?.id === t.id && (
+                    {isActive && (
                       <span className="material-symbols-outlined text-primary" style={{ fontVariationSettings: "'FILL' 1" }}>check_circle</span>
                     )}
                   </div>
@@ -301,46 +412,52 @@ export default function Parametres() {
           ))}
         </div>
 
-        <h4 className="font-semibold text-on-surface mb-md">Cartes « avantages » (bas de page simulateur)</h4>
+        <div className="flex flex-wrap items-center justify-between gap-sm mt-xl mb-md">
+          <h4 className="font-semibold text-on-surface">Cartes « avantages » (bas de page simulateur)</h4>
+          <button type="button" onClick={addFeature} className="btn-secondary text-sm">
+            + Ajouter une carte
+          </button>
+        </div>
         <div className="space-y-md">
           {(simulator.features || []).map((feat, idx) => (
-            <div key={idx} className="grid grid-cols-1 sm:grid-cols-3 gap-sm border border-outline-variant/40 rounded-lg p-md">
+            <div key={idx} className="grid grid-cols-1 sm:grid-cols-[1fr_1fr_1fr_auto] gap-sm border border-outline-variant/40 rounded-lg p-md items-end">
               <input
                 className="input-field"
                 placeholder="Emoji / icône"
                 value={feat.icon ?? ""}
-                onChange={(e) => {
-                  const features = [...(simulator.features || [])];
-                  features[idx] = { ...features[idx], icon: e.target.value };
-                  setSimulator((s) => ({ ...s, features }));
-                }}
+                onChange={(e) => updateFeature(idx, "icon", e.target.value)}
               />
               <input
                 className="input-field"
                 placeholder="Titre"
                 value={feat.title ?? ""}
-                onChange={(e) => {
-                  const features = [...(simulator.features || [])];
-                  features[idx] = { ...features[idx], title: e.target.value };
-                  setSimulator((s) => ({ ...s, features }));
-                }}
+                onChange={(e) => updateFeature(idx, "title", e.target.value)}
               />
               <input
-                className="input-field sm:col-span-1"
+                className="input-field"
                 placeholder="Description"
                 value={feat.desc ?? ""}
-                onChange={(e) => {
-                  const features = [...(simulator.features || [])];
-                  features[idx] = { ...features[idx], desc: e.target.value };
-                  setSimulator((s) => ({ ...s, features }));
-                }}
+                onChange={(e) => updateFeature(idx, "desc", e.target.value)}
               />
+              <button
+                type="button"
+                onClick={() => removeFeature(idx)}
+                className="btn-secondary text-error shrink-0"
+                title="Supprimer"
+              >
+                <span className="material-symbols-outlined text-[18px]">delete</span>
+              </button>
             </div>
           ))}
         </div>
 
-        <button type="button" onClick={saveSimulator} className="btn-primary mt-lg">
-          Enregistrer le simulateur
+        <button
+          type="button"
+          onClick={saveSimulator}
+          disabled={savingSimulator || !token}
+          className="btn-primary mt-lg disabled:opacity-50"
+        >
+          {savingSimulator ? "Enregistrement…" : "Enregistrer le simulateur"}
         </button>
           </div>
 
