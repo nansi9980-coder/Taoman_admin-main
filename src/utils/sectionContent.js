@@ -16,6 +16,7 @@ import {
   operationalServicesEditorToPayload,
   OPERATIONAL_SERVICE_TEMPLATES,
 } from "./operationalServicesDefaults";
+import { getLocaleSlice } from "./cmsLocale";
 
 export {
   sectorsEditorToPayload,
@@ -395,9 +396,10 @@ function mergeContentBlocks(defaultBlocks = [], apiBlocks = []) {
   return out;
 }
 
-export function getEffectiveSectionContent(key, texts) {
+export function getEffectiveSectionContent(key, texts, language = "FR") {
   const record = findSectionRecord(texts, key);
-  const fromApi = parseSectionContent(record?.content);
+  const parsed = parseSectionContent(record?.content);
+  const fromApi = getLocaleSlice(parsed, language);
   const defaults = getDefaultSectionContent(key);
   if (!record) {
     if (key === "sectors") return { items: mergeSectorCmsItems([]) };
@@ -466,8 +468,8 @@ export function getEffectiveSectionContent(key, texts) {
   return merged;
 }
 
-export function prepareContentForEditor(key, texts) {
-  const effective = getEffectiveSectionContent(key, texts);
+export function prepareContentForEditor(key, texts, language = "FR") {
+  const effective = getEffectiveSectionContent(key, texts, language);
   if (key === "hero") {
     const normalized = normalizeHeroForEditor(effective);
     normalized.mosaic = mergeHeroMosaicBlock(normalized.mosaic || effective.mosaic);

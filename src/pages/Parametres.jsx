@@ -5,6 +5,8 @@ import { apiFetch, buildUrl } from "../utils/api";
 import MediaPicker from "../components/MediaPicker";
 import { parseSectionContent } from "../utils/sectionContent";
 import { textOnBackground } from "../utils/applyThemePalette";
+import SimulatorAdminPreview from "../components/SimulatorAdminPreview";
+import { PLACEMENT_KEYS } from "../utils/investmentSimulator";
 
 const DEFAULT_SIMULATOR = {
   investment: "500000",
@@ -14,6 +16,22 @@ const DEFAULT_SIMULATOR = {
   compoundFrequency: "12",
   inflation: "3",
   taxRate: "5",
+  minInvestment: "500000",
+  maxDuration: "10",
+  defaultMode: "avance",
+  sectorRates: {
+    Diversifie: "18",
+    "BTP & Immobilier": "16",
+    "Agro Business": "14",
+    "Commerce général": "15",
+    "Logistique & Transports": "17",
+    "Numérique & Services": "19",
+  },
+  features: [
+    { icon: "🔒", title: "Sécurisé", desc: "Vos données sont protégées et chiffrées" },
+    { icon: "📈", title: "Transparent", desc: "Suivi en temps réel de vos investissements" },
+    { icon: "⚡", title: "Rapide", desc: "Investissez en moins de 5 minutes" },
+  ],
 };
 
 export default function Parametres() {
@@ -38,7 +56,15 @@ export default function Parametres() {
         if (!Array.isArray(texts)) return;
         const sim = texts.find((t) => t.section === "simulator");
         const brand = texts.find((t) => t.section === "branding");
-        if (sim) setSimulator({ ...DEFAULT_SIMULATOR, ...parseSectionContent(sim.content) });
+        if (sim) {
+          const parsed = parseSectionContent(sim.content);
+          setSimulator({
+            ...DEFAULT_SIMULATOR,
+            ...parsed,
+            sectorRates: { ...DEFAULT_SIMULATOR.sectorRates, ...(parsed.sectorRates || {}) },
+            features: parsed.features?.length ? parsed.features : DEFAULT_SIMULATOR.features,
+          });
+        }
         if (brand) setBranding(parseSectionContent(brand.content));
       })
       .catch(console.error);
@@ -90,7 +116,10 @@ export default function Parametres() {
         body: { section: "simulator", content: simulator },
         token,
       });
-      setSaveMsg("Paramètres simulateur enregistrés.");
+      setSaveMsg("Paramètres simulateur enregistrés (page /investissement/simulateur).");
+      if (typeof window !== "undefined") {
+        window.dispatchEvent(new CustomEvent("taoman-cms-updated"));
+      }
       setTimeout(() => setSaveMsg(""), 4000);
     } catch (e) {
       alert(e.message);
@@ -215,20 +244,27 @@ export default function Parametres() {
         )}
       </div>
 
-      <div className="card max-w-3xl">
-        <h3 className="font-headline-md text-headline-md mb-md">Simulateur d'investissement (vitrine)</h3>
+      <div className="card max-w-6xl">
+        <h3 className="font-headline-md text-headline-md mb-md">Simulateur d'investissement</h3>
         <p className="text-body-md text-on-surface-variant mb-lg">
-          Valeurs par défaut de la page /investissement/simulateur
+          Paramètres de la page <code className="text-primary">/investissement/simulateur</code>. L&apos;aperçu à droite
+          se met à jour en temps réel ; cliquez sur Enregistrer pour publier sur le site.
         </p>
+
+        <div className="grid grid-cols-1 xl:grid-cols-[1fr_380px] gap-xl items-start">
+          <div>
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-md">
           {[
             ["investment", "Capital initial (FCFA)"],
-            ["duration", "Durée max (mois)"],
-            ["annualRate", "Taux annuel (%)"],
+            ["minInvestment", "Montant minimum (FCFA)"],
+            ["duration", "Durée par défaut (mois)"],
+            ["maxDuration", "Durée maximum (mois)"],
+            ["annualRate", "Taux annuel par défaut (%)"],
             ["monthlyContribution", "Versement mensuel (FCFA)"],
-            ["compoundFrequency", "Capitalisation / an"],
+            ["compoundFrequency", "Capitalisation / an (1, 4, 12, 365)"],
             ["inflation", "Inflation (%)"],
             ["taxRate", "Fiscalité (%)"],
+            ["defaultMode", "Mode par défaut (simple, avance, professionnel)"],
           ].map(([key, label]) => (
             <div key={key}>
               <label className="block text-label-md text-on-surface-variant mb-xs">{label}</label>
@@ -240,9 +276,76 @@ export default function Parametres() {
             </div>
           ))}
         </div>
+
+        <h4 className="font-semibold text-on-surface mt-xl mb-md">Taux par secteur (%)</h4>
+        <p className="text-body-sm text-on-surface-variant mb-md">
+          Lorsque l'utilisateur change le type de placement, le taux annuel est mis à jour automatiquement.
+        </p>
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-md">
+          {PLACEMENT_KEYS.map((placement) => (
+            <div key={placement}>
+              <label className="block text-label-md text-on-surface-variant mb-xs">{placement}</label>
+              <input
+                className="input-field"
+                type="number"
+                step="0.1"
+                value={simulator.sectorRates?.[placement] ?? ""}
+                onChange={(e) =>
+                  setSimulator((s) => ({
+                    ...s,
+                    sectorRates: { ...s.sectorRates, [placement]: e.target.value },
+                  }))
+                }
+              />
+            </div>
+          ))}
+        </div>
+
+        <h4 className="font-semibold text-on-surface mb-md">Cartes « avantages » (bas de page simulateur)</h4>
+        <div className="space-y-md">
+          {(simulator.features || []).map((feat, idx) => (
+            <div key={idx} className="grid grid-cols-1 sm:grid-cols-3 gap-sm border border-outline-variant/40 rounded-lg p-md">
+              <input
+                className="input-field"
+                placeholder="Emoji / icône"
+                value={feat.icon ?? ""}
+                onChange={(e) => {
+                  const features = [...(simulator.features || [])];
+                  features[idx] = { ...features[idx], icon: e.target.value };
+                  setSimulator((s) => ({ ...s, features }));
+                }}
+              />
+              <input
+                className="input-field"
+                placeholder="Titre"
+                value={feat.title ?? ""}
+                onChange={(e) => {
+                  const features = [...(simulator.features || [])];
+                  features[idx] = { ...features[idx], title: e.target.value };
+                  setSimulator((s) => ({ ...s, features }));
+                }}
+              />
+              <input
+                className="input-field sm:col-span-1"
+                placeholder="Description"
+                value={feat.desc ?? ""}
+                onChange={(e) => {
+                  const features = [...(simulator.features || [])];
+                  features[idx] = { ...features[idx], desc: e.target.value };
+                  setSimulator((s) => ({ ...s, features }));
+                }}
+              />
+            </div>
+          ))}
+        </div>
+
         <button type="button" onClick={saveSimulator} className="btn-primary mt-lg">
           Enregistrer le simulateur
         </button>
+          </div>
+
+          <SimulatorAdminPreview config={simulator} />
+        </div>
       </div>
     </div>
   );

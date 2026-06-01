@@ -19,7 +19,9 @@ import {
   heroEditorToPayload,
   servicesPageEditorToPayload,
   operationalServicesEditorToPayload,
+  parseSectionContent,
 } from "../utils/sectionContent";
+import { CMS_EDIT_LANGUAGES, wrapLocalePayload } from "../utils/cmsLocale";
 import { mergeHeroMosaicBlock } from "../utils/heroMosaicDefaults";
 import { mergeServicesPageHeroSlides } from "../utils/servicesPageHeroDefaults";
 import { mergeOperationalServices } from "../utils/operationalServicesDefaults";
@@ -70,6 +72,7 @@ export default function Contenu() {
   });
 
   const [textForm, setTextForm] = useState({ section: "", content: {} });
+  const [editLanguage, setEditLanguage] = useState("FR");
 
   const loadData = async () => {
     setLoading(true);
@@ -98,8 +101,15 @@ export default function Contenu() {
     setModalType("section");
     setSelectedSection(key);
     setEditingItem(section);
-    setTextForm({ section: key, content: prepareContentForEditor(key, texts) });
+    setEditLanguage("FR");
+    setTextForm({ section: key, content: prepareContentForEditor(key, texts, "FR") });
     setModalOpen(true);
+  };
+
+  const switchEditLanguage = (code) => {
+    if (!selectedSection) return;
+    setEditLanguage(code);
+    setTextForm({ section: selectedSection, content: prepareContentForEditor(selectedSection, texts, code) });
   };
 
   const handleTextSubmit = async (e) => {
@@ -112,10 +122,13 @@ export default function Contenu() {
     if (textForm.section === "hero") payload = heroEditorToPayload(textForm.content);
     if (textForm.section === "servicesPage") payload = servicesPageEditorToPayload(textForm.content);
     if (textForm.section === "operationalServices") payload = operationalServicesEditorToPayload(textForm.content);
+    const record = texts.find((t) => t.section === textForm.section);
+    const existingParsed = parseSectionContent(record?.content);
+    const contentToSave = wrapLocalePayload(existingParsed, editLanguage, payload);
     try {
       await apiFetch("/content/texts", {
         method: "POST",
-        body: { section: textForm.section, content: payload },
+        body: { section: textForm.section, content: contentToSave },
         token,
       });
       setSaveMessage("Section enregistrée avec succès.");
@@ -739,8 +752,31 @@ export default function Contenu() {
       {modalOpen && modalType === "section" && selectedSection && (
         <Modal open onClose={() => setModalOpen(false)} title={`Modifier — ${sectionLabel(selectedSection)}`}>
           <form onSubmit={handleTextSubmit} className="space-y-md pb-lg">
+            <div className="rounded-xl border border-outline-variant p-sm space-y-sm">
+              <p className="text-label-md font-bold text-on-surface">Langue éditée sur le site</p>
+              <p className="text-body-sm text-on-surface-variant">
+                Choisissez la langue, traduisez les champs, puis enregistrez. Le français reste la langue de référence si une traduction manque.
+              </p>
+              <div className="flex flex-wrap gap-xs">
+                {CMS_EDIT_LANGUAGES.map((lang) => (
+                  <button
+                    key={lang.code}
+                    type="button"
+                    onClick={() => switchEditLanguage(lang.code)}
+                    className={clsx(
+                      "px-3 py-1.5 rounded-lg text-sm font-bold border transition-colors",
+                      editLanguage === lang.code
+                        ? "bg-primary text-white border-primary"
+                        : "bg-surface border-outline-variant text-on-surface hover:border-primary/50"
+                    )}
+                  >
+                    {lang.label}
+                  </button>
+                ))}
+              </div>
+            </div>
             <p className="text-body-sm text-on-surface-variant rounded-lg bg-surface-container-low p-sm">
-              Les champs ci-dessous reprennent le contenu actuellement affiché sur le site. Modifiez puis enregistrez.
+              Contenu affiché pour <strong>{editLanguage}</strong>. Modifiez puis enregistrez (les autres langues déjà sauvegardées sont conservées).
             </p>
             <SectionEditorFields
               sectionKey={selectedSection}
