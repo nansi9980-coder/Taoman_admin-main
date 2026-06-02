@@ -6,10 +6,10 @@ import { apiFetch, API_BASE } from "../utils/api";
 import { parseSectionContent, findSectionRecord } from "../utils/sectionContent";
 
 const DEFAULT_MAP = {
-  lat: "6.2186389",
-  lng: "1.2052778",
-  coordinatesLabel: '6°13\'07.1"N 1°12\'19.0"E',
-  address: "Vakpossito, Lomé — Togo",
+  lat: "6.2388696",
+  lng: "1.2097291",
+  coordinatesLabel: '6°14\'20"N 1°12\'35"E',
+  address: "Agoè Cacaveli, en face de Toganim — Lomé, Togo",
 };
 
 const emptySiteContact = {
@@ -207,7 +207,7 @@ export default function Contact() {
                   className="input-field"
                   value={siteContact.address}
                   onChange={(e) => setSiteContact((s) => ({ ...s, address: e.target.value }))}
-                  placeholder="Lomé, Togo"
+                  placeholder="Agoè Cacaveli, en face de Toganim — Lomé"
                 />
               </div>
               <div>
@@ -225,7 +225,7 @@ export default function Contact() {
                   className="input-field"
                   value={siteContact.lat ?? ""}
                   onChange={(e) => setSiteContact((s) => ({ ...s, lat: e.target.value }))}
-                  placeholder="6.2186389"
+                  placeholder="6.2388696"
                 />
               </div>
               <div>
@@ -234,7 +234,7 @@ export default function Contact() {
                   className="input-field"
                   value={siteContact.lng ?? ""}
                   onChange={(e) => setSiteContact((s) => ({ ...s, lng: e.target.value }))}
-                  placeholder="1.2052778"
+                  placeholder="1.2097291"
                 />
               </div>
               <div className="sm:col-span-2">

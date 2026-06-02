@@ -8,6 +8,11 @@ import { textOnBackground } from "../utils/applyThemePalette";
 import SimulatorAdminPreview from "../components/SimulatorAdminPreview";
 import { PLACEMENT_KEYS } from "../utils/investmentSimulator";
 
+const DEFAULT_SITE_FEATURES = {
+  leadersSectionVisible: false,
+  simulatorPublicVisible: false,
+};
+
 const DEFAULT_SIMULATOR = {
   investment: "500000",
   duration: "10",
@@ -63,10 +68,12 @@ export default function Parametres() {
   const [themeBusy, setThemeBusy] = useState(false);
   const [simulator, setSimulator] = useState(DEFAULT_SIMULATOR);
   const [branding, setBranding] = useState({ logoUrl: "" });
+  const [siteFeatures, setSiteFeatures] = useState(DEFAULT_SITE_FEATURES);
   const [saveMsg, setSaveMsg] = useState("");
   const [saveError, setSaveError] = useState("");
   const [savingBranding, setSavingBranding] = useState(false);
   const [savingSimulator, setSavingSimulator] = useState(false);
+  const [savingSiteFeatures, setSavingSiteFeatures] = useState(false);
 
   const loadThemes = async () => {
     setThemesError("");
@@ -90,6 +97,7 @@ export default function Parametres() {
         if (!Array.isArray(texts)) return;
         const sim = texts.find((t) => t.section === "simulator");
         const brand = texts.find((t) => t.section === "branding");
+        const features = texts.find((t) => t.section === "siteFeatures");
         if (sim) {
           const parsed = parseSectionContent(sim.content);
           setSimulator({
@@ -100,6 +108,14 @@ export default function Parametres() {
           });
         }
         if (brand) setBranding(parseSectionContent(brand.content));
+        if (features) {
+          const parsed = parseSectionContent(features.content);
+          setSiteFeatures({
+            ...DEFAULT_SITE_FEATURES,
+            leadersSectionVisible: parsed.leadersSectionVisible === true,
+            simulatorPublicVisible: parsed.simulatorPublicVisible === true,
+          });
+        }
       })
       .catch(console.error);
   }, [token]);
@@ -181,6 +197,29 @@ export default function Parametres() {
     }
   };
 
+  const saveSiteFeatures = async () => {
+    if (!token) {
+      setSaveError("Session expirée. Reconnectez-vous.");
+      return;
+    }
+    setSavingSiteFeatures(true);
+    setSaveError("");
+    try {
+      await apiFetch("/content/texts", {
+        method: "POST",
+        body: { section: "siteFeatures", content: siteFeatures },
+        token,
+      });
+      setSaveMsg("Visibilité du site enregistrée (vitrine mise à jour).");
+      notifyCmsUpdated();
+      setTimeout(() => setSaveMsg(""), 4000);
+    } catch (e) {
+      setSaveError(e.message);
+    } finally {
+      setSavingSiteFeatures(false);
+    }
+  };
+
   const saveBranding = async () => {
     if (!token) {
       setSaveError("Session expirée. Reconnectez-vous.");
@@ -230,7 +269,7 @@ export default function Parametres() {
     <div className="space-y-lg animate-fadeIn p-lg">
       <div>
         <h1 className="page-title">Paramètres</h1>
-        <p className="page-subtitle">Palettes, logo, simulateur d'investissement.</p>
+        <p className="page-subtitle">Palettes, logo, visibilité des sections, simulateur d'investissement.</p>
       </div>
 
       {saveMsg && (
@@ -270,6 +309,56 @@ export default function Parametres() {
           className="btn-primary mt-md disabled:opacity-50"
         >
           {savingBranding ? "Enregistrement…" : "Enregistrer le logo"}
+        </button>
+      </div>
+
+      <div className="card max-w-3xl">
+        <h3 className="font-headline-md text-headline-md mb-md">Visibilité du site</h3>
+        <p className="text-body-md text-on-surface-variant mb-lg">
+          Activez ou masquez des blocs sur la vitrine. Le simulateur reste configurable ci-dessous et accessible depuis
+          l&apos;espace compte investisseur (<code className="text-primary">/dashboard</code>).
+        </p>
+        <div className="space-y-md">
+          <label className="flex items-start gap-sm cursor-pointer">
+            <input
+              type="checkbox"
+              className="mt-1"
+              checked={siteFeatures.leadersSectionVisible}
+              onChange={(e) =>
+                setSiteFeatures((s) => ({ ...s, leadersSectionVisible: e.target.checked }))
+              }
+            />
+            <span>
+              <span className="font-semibold text-on-surface block">Équipe dirigeante</span>
+              <span className="text-body-sm text-on-surface-variant">
+                Affiche la section sur l&apos;accueil et la page À propos.
+              </span>
+            </span>
+          </label>
+          <label className="flex items-start gap-sm cursor-pointer">
+            <input
+              type="checkbox"
+              className="mt-1"
+              checked={siteFeatures.simulatorPublicVisible}
+              onChange={(e) =>
+                setSiteFeatures((s) => ({ ...s, simulatorPublicVisible: e.target.checked }))
+              }
+            />
+            <span>
+              <span className="font-semibold text-on-surface block">Simulateur public</span>
+              <span className="text-body-sm text-on-surface-variant">
+                Menu, pied de page et accès direct sans connexion. Désactivé = réservé aux comptes connectés.
+              </span>
+            </span>
+          </label>
+        </div>
+        <button
+          type="button"
+          onClick={saveSiteFeatures}
+          disabled={savingSiteFeatures || !token}
+          className="btn-primary mt-md disabled:opacity-50"
+        >
+          {savingSiteFeatures ? "Enregistrement…" : "Enregistrer la visibilité"}
         </button>
       </div>
 
