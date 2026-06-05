@@ -118,7 +118,7 @@ export default function Contenu() {
     if (textForm.section === "statistics") payload = statsEditorToPayload(textForm.content);
     if (textForm.section === "about") payload = aboutEditorToPayload(textForm.content);
     if (textForm.section === "sectors") payload = sectorsEditorToPayload(textForm.content);
-    if (textForm.section === "realisations") payload = realisationsEditorToPayload(textForm.content);
+    if (textForm.section === "realisations") payload = realisationsEditorToPayload(textForm.content, editLanguage);
     if (textForm.section === "hero") payload = heroEditorToPayload(textForm.content);
     if (textForm.section === "servicesPage") payload = servicesPageEditorToPayload(textForm.content);
     if (textForm.section === "operationalServices") payload = operationalServicesEditorToPayload(textForm.content);

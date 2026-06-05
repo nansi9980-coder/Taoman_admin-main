@@ -143,16 +143,20 @@ export function mergeRealisationCmsItems(cmsList = [], templates = REALISATION_S
   return merged;
 }
 
-export function realisationsEditorToPayload(content = {}) {
+export function realisationsEditorToPayload(content = {}, language = "FR") {
+  const keepMedia = !language || language === "FR";
   const items = mergeRealisationCmsItems(content.items || [])
     .filter((item) => item.imageUrl?.trim() || item.title?.trim())
-    .map(({ id, title, category, progress, imageUrl }) => ({
-      id,
-      title,
-      category,
-      progress: progress ?? 70,
-      imageUrl: imageUrl || "",
-    }));
+    .map(({ id, title, category, progress, imageUrl }) => {
+      const row = {
+        id,
+        title,
+        category,
+        progress: progress ?? 70,
+      };
+      if (keepMedia) row.imageUrl = imageUrl || "";
+      return row;
+    });
   return {
     footerText: content.footerText || "",
     items,
