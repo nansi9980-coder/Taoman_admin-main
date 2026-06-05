@@ -57,7 +57,7 @@ export const SECTION_PREVIEW_PATHS = {
   sectors: "/",
   testimonials: "/",
   investment: "/investissement",
-  investmentTie: "/investissement/tie",
+  investmentTie: "/investissement/tgi",
   servicesPage: "/services",
   operationalServices: "/services",
   legal: "/mentions-legales",
@@ -366,7 +366,7 @@ export function getDefaultSectionContent(key) {
           { label: "Investissement Minimum", value: "500K FCFA", icon: "💰" },
           { label: "Rendement Moyen", value: "150K FCFA/mois", icon: "📈" },
           { label: "Délai Retour", value: "10 mois", icon: "⏱️" },
-          { label: "Retour Total Moyen", value: "2M FCFA", icon: "🎯" },
+          { label: "Retour Total Moyen", value: "1,5M FCFA", icon: "🎯" },
         ],
       };
     case "servicesPage":
