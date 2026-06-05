@@ -369,7 +369,9 @@ export function AppProvider({ children }) {
       setDashboardStats(data);
       return data;
     } catch (err) {
-      setError(err.message);
+      if (err.status !== 401) {
+        setError(err.message);
+      }
       return null;
     } finally {
       setLoading(false);
@@ -383,7 +385,13 @@ export function AppProvider({ children }) {
       auth: { token },
       reconnection: true,
       reconnectionAttempts: 8,
+      reconnectionDelay: 3000,
+      reconnectionDelayMax: 10000,
       timeout: 20000,
+    });
+
+    socket.on("connect_error", () => {
+      /* polling reprend automatiquement — pas d'alerte utilisateur */
     });
 
     socket.on("newLog", (log) => {
