@@ -153,7 +153,7 @@ export const SITE_SECTION_META = {
 };
 
 const ABOUT_DEFAULTS = {
-  title: "TAOMAN Groupe Investissement construit une plateforme de confiance.",
+  title: "TAOMAN GROUP INVESTMENTS : votre partenaire stratégique au Togo.",
   description:
     "Notre ambition est de relier services terrain, investissement structuré, reporting et accompagnement client dans une expérience claire.",
   imageUrl: "",
@@ -176,7 +176,7 @@ const ABOUT_DEFAULTS = {
   ],
   timelineTitle: "Notre Parcours",
   timeline: [
-    { year: "2018", event: "Fondation de TAOMAN Groupe Investissement" },
+    { year: "2018", event: "Fondation de TAOMAN GROUP INVESTMENTS" },
     { year: "2020", event: "Lancement du programme d'investissement" },
     { year: "2022", event: "500K+ FCFA investis" },
     { year: "2024", event: "Expansion régionale" },
@@ -194,7 +194,7 @@ const ABOUT_DEFAULTS = {
     { number: "PDF", label: "Reporting investisseur" },
   ],
   cta: {
-    title: "Rejoignez l'écosystème TAOMAN Groupe Investissement",
+    title: "Rejoignez l'écosystème TAOMAN GROUP INVESTMENTS",
     description: "Découvrez comment nous pouvons contribuer à votre succès.",
     buttonText: "Commencer maintenant",
   },
@@ -245,7 +245,7 @@ export function getDefaultSectionContent(key) {
         title: "Excellence",
         subtitle: "dans chaque service",
         description:
-          "Taoman Group Investments offre des services professionnels de qualité supérieure et des opportunités d'investissement transparentes pour votre réussite financière.",
+          "TAOMAN GROUP INVESTMENTS offre des services professionnels de qualité supérieure et des opportunités d'investissement transparentes pour votre réussite financière.",
         btn1: "Commencer à investir",
         btn2: "Voir nos services",
         imageCaption: "Projets suivis sur le terrain",
@@ -301,12 +301,12 @@ export function getDefaultSectionContent(key) {
             name: "Jean Tchakondo",
             role: "Investisseur Privé",
             comment:
-              "TAOMAN Groupe Investissement offre une transparence exceptionnelle. J'ai augmenté mes revenus mensuels de manière constante.",
+              "TAOMAN GROUP INVESTMENTS offre une transparence exceptionnelle. J'ai augmenté mes revenus mensuels de manière constante.",
           },
           {
             name: "Marie Sefako",
             role: "PDG - Groupe Import",
-            comment: "Service d'entretien impeccable et équipe professionnelle. Je recommande vivement TAOMAN Groupe Investissement!",
+            comment: "Service d'entretien impeccable et équipe professionnelle. Je recommande vivement TAOMAN GROUP INVESTMENTS!",
           },
         ],
       };
@@ -323,7 +323,7 @@ export function getDefaultSectionContent(key) {
     case "footer":
       return {
         description:
-          "TAOMAN Groupe Investissement — services professionnels et investissement structuré pour particuliers et entreprises.",
+          "TAOMAN GROUP INVESTMENTS — services professionnels et investissement structuré pour particuliers et entreprises.",
       };
     case "contact":
       return {
@@ -337,15 +337,15 @@ export function getDefaultSectionContent(key) {
       };
     case "seo":
       return {
-        metaTitle: "TAOMAN Groupe Investissement",
-        metaDescription: "Services professionnels et investissement structuré — TAOMAN Groupe Investissement.",
+        metaTitle: "TAOMAN GROUP INVESTMENTS",
+        metaDescription: "Services professionnels et investissement structuré — TAOMAN GROUP INVESTMENTS.",
       };
     case "about":
       return JSON.parse(JSON.stringify(ABOUT_DEFAULTS));
     case "investment":
       return {
         badge: "Investissement structuré",
-        title: "TAOMAN Groupe Investissement",
+        title: "TAOMAN GROUP INVESTMENTS",
         description:
           "Une plateforme claire pour comprendre les projets, simuler les intérêts, suivre le capital et recevoir un reporting exploitable.",
         stats: [
@@ -358,7 +358,7 @@ export function getDefaultSectionContent(key) {
     case "investmentTie":
       return {
         badge: "TAOMAN TIE",
-        title: "TAOMAN Groupe Investissement",
+        title: "TAOMAN GROUP INVESTMENTS",
         subtitle: "Bâtissez votre indépendance financière",
         description:
           "Une opportunité transformative pour les investisseurs recherchant des rendements durables et un impact communautaire significatif à Lomé et au-delà.",
@@ -374,7 +374,7 @@ export function getDefaultSectionContent(key) {
         badge: "Services opérationnels",
         title: "Des services terrain clairs, rapides et suivis.",
         description:
-          "TAOMAN Groupe Investissement combine équipes terrain, devis structurés, qualité contrôlée et suivi client pour les particuliers, entreprises et investisseurs.",
+          "TAOMAN GROUP INVESTMENTS combine équipes terrain, devis structurés, qualité contrôlée et suivi client pour les particuliers, entreprises et investisseurs.",
         btn1: "Demander un devis",
         btn2: "Voir l'investissement",
         heroSlides: SERVICES_PAGE_HERO_SLIDES.map((s) => ({ ...s })),
