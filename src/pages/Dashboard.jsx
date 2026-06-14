@@ -189,8 +189,8 @@ export default function Dashboard() {
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-lg mb-xl">
         <StatCard icon="description" label="Devis en attente" value={pendingQuotes} accent="warning" />
         <StatCard icon="contact_mail" label="Contacts non traités" value={stats.newContacts ?? "—"} accent="orange" />
+        <StatCard icon="rocket_launch" label="Projets à traiter" value={stats.newProjectSubmissions ?? "—"} accent="primary" />
         <StatCard icon="design_services" label="Services publiés" value={stats.publishedServices ?? "—"} accent="secondary" />
-        <StatCard icon="edit_note" label="Sections contenu" value={stats.filledContentSections ?? "—"} accent="primary" />
       </div>
 
       {/* Charts row */}
@@ -294,6 +294,21 @@ export default function Dashboard() {
             </ul>
           )}
           <a href="/devis" className="inline-block mt-md text-label-sm text-primary hover:underline">Voir tous les devis →</a>
+        </ChartCard>
+        <ChartCard title="Derniers projets soumis">
+          {(stats.recentProjectSubmissions || []).length === 0 ? (
+            <p className="text-body-sm text-outline">Aucun projet récent</p>
+          ) : (
+            <ul className="space-y-sm">
+              {stats.recentProjectSubmissions.map((p) => (
+                <li key={p.id} className="flex justify-between gap-sm text-body-sm border-b border-outline-variant/30 pb-sm">
+                  <span className="font-medium text-on-surface truncate">{p.projectName}</span>
+                  <span className="text-outline shrink-0">{p.sector}</span>
+                </li>
+              ))}
+            </ul>
+          )}
+          <a href="/projets" className="inline-block mt-md text-label-sm text-primary hover:underline">Voir tous les projets →</a>
         </ChartCard>
       </div>
 

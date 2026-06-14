@@ -23,6 +23,7 @@ import Calendar from "./pages/Calendar";
 import Investments from "./pages/Investments";
 import Backup from "./pages/Backup";
 import Contact from "./pages/Contact";
+import Projets from "./pages/Projets";
 import Login from "./pages/Login";
 
 // Protected route wrapper
@@ -60,6 +61,7 @@ function AdminLayout() {
             <Route path="/jobs" element={<Jobs />} />
             <Route path="/messages" element={<Navigate to="/contact" replace />} />
             <Route path="/contact" element={<Contact />} />
+            <Route path="/projets" element={<Projets />} />
             <Route path="/calendar" element={<Calendar />} />
             <Route path="/investments" element={<Investments />} />
             <Route path="/backup" element={<Backup />} />

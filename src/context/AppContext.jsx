@@ -425,6 +425,15 @@ export function AppProvider({ children }) {
       });
     });
 
+    socket.on("newProjectSubmission", (submission) => {
+      fetchDashboardStats();
+      addNotification({
+        type: "project",
+        title: "Nouveau projet soumis",
+        message: `${submission?.projectName || "Projet"} — ${submission?.contactName || ""}`,
+      });
+    });
+
     return () => socket.disconnect();
   }, [token, fetchDevis, fetchDashboardStats, addNotification]);
 
