@@ -621,6 +621,13 @@ export default function SectionEditorFields({
               )}
             </div>
         ))}
+        <button
+          type="button"
+          onClick={() => addListItem({ title: "", category: "", progress: 70, imageUrl: "" })}
+          className="btn-secondary text-label-sm"
+        >
+          + Ajouter une réalisation
+        </button>
       </div>
     );
   }
