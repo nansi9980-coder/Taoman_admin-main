@@ -120,10 +120,10 @@ export function mergeRealisationCmsItems(cmsList = [], templates = REALISATION_S
     const cms = byId.get(t.id);
     return {
       id: t.id,
-      title: cms?.title?.trim() || t.title,
-      category: cms?.category?.trim() || t.category,
-      progress: cms?.progress ?? t.progress,
-      imageUrl: cms?.imageUrl || "",
+      title: cms && cms.title !== undefined ? String(cms.title).trim() : t.title,
+      category: cms && cms.category !== undefined ? String(cms.category).trim() : t.category,
+      progress: cms && cms.progress !== undefined ? cms.progress : t.progress,
+      imageUrl: cms && cms.imageUrl !== undefined ? cms.imageUrl || "" : "",
       staticPreview: t.staticPreview,
     };
   });
