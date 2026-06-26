@@ -96,6 +96,14 @@ export default function Contenu() {
     loadData();
   }, [token]);
 
+  useEffect(() => {
+    if (!token) return undefined;
+    const interval = setInterval(() => {
+      loadData();
+    }, 30 * 60 * 1000);
+    return () => clearInterval(interval);
+  }, [token, loadData]);
+
   const openSectionEditor = (key) => {
     const section = texts.find((t) => t.section === key) || null;
     setModalType("section");
