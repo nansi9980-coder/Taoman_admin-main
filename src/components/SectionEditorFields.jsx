@@ -632,19 +632,23 @@ export default function SectionEditorFields({
     );
   }
 
-  if (["testimonials", "faq"].includes(sectionKey)) {
+  if (["testimonials", "faq", "promo"].includes(sectionKey)) {
     const empty =
       sectionKey === "faq"
         ? { question: "", answer: "" }
+        : sectionKey === "promo"
+        ? { text: "", href: "" }
         : { name: "", role: "", comment: "" };
     return (
       <div className="space-y-md">
         {(ensureItems(content, [empty]).items || []).map((item, index) => (
           <div key={index} className="p-md border border-outline-variant rounded-lg space-y-sm">
-            <PreviewImage
-              url={item.imageUrl}
-              title={item.title || item.name || `Élément ${index + 1}`}
-            />
+            {sectionKey !== "promo" && (
+              <PreviewImage
+                url={item.imageUrl}
+                title={item.title || item.name || `Élément ${index + 1}`}
+              />
+            )}
             <div className="flex justify-between">
               <span className="font-semibold text-label-md">Élément {index + 1}</span>
               {(content.items?.length || 0) > 1 && (
@@ -655,6 +659,21 @@ export default function SectionEditorFields({
               <>
                 <input className="input-field" value={item.question || ""} onChange={(e) => updateListItem(index, "question", e.target.value)} />
                 <textarea className="input-field resize-none" rows={3} value={item.answer || ""} onChange={(e) => updateListItem(index, "answer", e.target.value)} />
+              </>
+            ) : sectionKey === "promo" ? (
+              <>
+                <input
+                  className="input-field"
+                  placeholder="Texte de l'annonce (ex: Ouverture des inscriptions bientôt)"
+                  value={item.text || ""}
+                  onChange={(e) => updateListItem(index, "text", e.target.value)}
+                />
+                <input
+                  className="input-field"
+                  placeholder="Lien (ex: /inscription)"
+                  value={item.href || ""}
+                  onChange={(e) => updateListItem(index, "href", e.target.value)}
+                />
               </>
             ) : sectionKey === "testimonials" ? (
               <>

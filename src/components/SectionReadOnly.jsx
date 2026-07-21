@@ -216,6 +216,22 @@ export default function SectionReadOnly({ sectionKey, content, savedInDb }) {
         </div>
       );
 
+    case "promo":
+      return wrap(
+        <div className="space-y-sm">
+          {(content.items || []).length === 0 ? (
+            <p className="text-on-surface-variant italic">Aucune annonce en base — le bandeau utilisera le texte par défaut.</p>
+          ) : (
+            (content.items || []).map((item, i) => (
+              <div key={i} className="p-sm border border-outline-variant/30 rounded-lg">
+                <p className="font-semibold">{item.text}</p>
+                {item.href && <p className="text-on-surface-variant text-label-sm">→ {item.href}</p>}
+              </div>
+            ))
+          )}
+        </div>
+      );
+
     case "cta":
       return wrap(
         <>

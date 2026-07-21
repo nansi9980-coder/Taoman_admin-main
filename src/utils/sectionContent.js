@@ -56,6 +56,7 @@ export const SECTION_PREVIEW_PATHS = {
   statistics: "/",
   sectors: "/",
   testimonials: "/",
+  promo: "/",
   investment: "/investissement",
   investmentTie: "/investissement/tgi",
   servicesPage: "/services",
@@ -99,7 +100,7 @@ export const VITRINE_PAGE_GROUPS = [
     id: "global",
     label: "Site global",
     path: "/",
-    sections: ["faq", "contact", "footer", "seo"],
+    sections: ["promo", "faq", "contact", "footer", "seo"],
   },
   {
     id: "legal",
@@ -129,6 +130,7 @@ export const SITE_SECTION_META = {
   realisations: { emoji: "🖼️", label: "Réalisations terrain", description: "Carrousel accueil uniquement — ou médiathèque catégorie « Réalisations »" },
   mediaSettings: { emoji: "⚙️", label: "Vitesse défilement médias", description: "Autoplay et options de défilement" },
   testimonials: { emoji: "💬", label: "Témoignages", description: "Avis clients" },
+  promo: { emoji: "📢", label: "Bandeau d'annonces", description: "Phrases défilantes en haut du site (ex: ouverture des inscriptions)" },
   cta: { emoji: "📣", label: "Bannière CTA", description: "Appel à l'action accueil" },
   faq: { emoji: "❓", label: "FAQ", description: "Questions fréquentes" },
   footer: { emoji: "🔗", label: "Footer", description: "Pied de page" },
@@ -308,6 +310,14 @@ export function getDefaultSectionContent(key) {
             role: "PDG - Groupe Import",
             comment: "Service d'entretien impeccable et équipe professionnelle. Je recommande vivement TAOMAN GROUP INVESTMENTS!",
           },
+        ],
+      };
+    case "promo":
+      return {
+        items: [
+          { text: "Ouverture des inscriptions bientôt — préparez votre dossier dès maintenant", href: "/investissement/soumettre" },
+          { text: "Programme TGI ouvert — ticket d'investissement dès 500 000 FCFA", href: "/investissement/tgi" },
+          { text: "Rejoignez le réseau Taoman avant la clôture des places", href: "/inscription" },
         ],
       };
     case "cta":
@@ -503,7 +513,7 @@ export function prepareContentForEditor(key, texts, language = "FR") {
       items: mergeRealisationCmsItems(effective.items || []),
     };
   }
-  if (["testimonials", "faq"].includes(key)) {
+  if (["testimonials", "faq", "promo"].includes(key)) {
     const items = effective.items?.length ? effective.items : getDefaultSectionContent(key).items || [{}];
     return { ...effective, items };
   }
